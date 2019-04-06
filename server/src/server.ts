@@ -334,7 +334,7 @@ function generateIssueMessage(issue: Issue) {
     case 'E003': 
       return `The attribute "${issue.data.attribute}" is duplicated`; 
     case 'E011': 
-      return `Value "${issue.data.value}" of attribut "${issue.data.attribute}" does not respect the format '${issue.data.format}'`; 
+      return `Value "${issue.data.value}" of attribute "${issue.data.attribute}" does not respect the format '${issue.data.format}'`; 
     case 'E036': 
       return `Wrong indentation, expected indentation of ${issue.data.width}`; 
     case 'E037': 
