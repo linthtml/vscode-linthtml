@@ -1,4 +1,4 @@
-# vsocde-linthtml
+# vscode-linthtml
 
 [![Build Status](https://travis-ci.org/KamiKillertO/vscode-linthtml.svg?branch=master)](https://travis-ci.org/KamiKillertO/vscode-linthtml)
 
@@ -31,12 +31,12 @@ Default: `true`
 
 Control whether this extension is enabled or not.
 
-<!-- #### stylelint.config
+### linthtml.configFile
 
-Type: `Object`  
+Type: `string`
 Default: `null`
 
-Set stylelint [`config`](https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#config) option. Note that when this option is enabled, stylelint doesn't load configuration files. -->
+Specified the path to a config file for LintHTML that will be used to lint all HTML files in the current workspace.
 
 ## License
 

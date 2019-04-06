@@ -1,0 +1,21 @@
+{
+  "name": "linthtml-server",
+  "description": "Example implementation of a language server in node.",
+  "version": "0.1.2",
+  "license": "Apache License 2.0",
+  "author": "Benjamin JEGARD",
+  "publisher": "kamikillerto",
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KamiKillertO/vscode-linthtml"
+  },
+  "dependencies": {
+    "@linthtml/linthtml": "0.1.0",
+    "vscode-languageserver": "5.2.1",
+    "cosmiconfig": "5.1.0"
+  },
+  "scripts": {}
+}
