@@ -19,7 +19,7 @@ describe('Should get diagnostics', () => {
   //   ]);
   // });
 
-  it('Should use config htmlint rules using local .linthmlrc file', async () => {
+  it('Should use config htmlint rules using local .linthtmlrc file', async () => {
     const docUri = getDocUri('with-config-file/diagnostics.html');
     await testDiagnostics(docUri, [
     ]);

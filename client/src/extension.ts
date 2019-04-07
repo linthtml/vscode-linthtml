@@ -44,32 +44,36 @@ export function activate(context: ExtensionContext) {
     synchronize: {
       configurationSection: 'linthtml',
       // Notify the server about file changes to '.linthtmlrc.* files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.linthtmlrc.*')
+      fileEvents: workspace.createFileSystemWatcher('**/.linthtmlrc*')
     },
-    middleware: {
-      didOpen: (document, next) => {
-        // debugger
-        next(document);
-      },
-      didChange: (event, next) => {
-        // debugger
-        next(event);
-      },
-    }
+    // middleware: {
+    //   didOpen: (document, next) => {
+    //     // debugger
+    //     next(document);
+    //   },
+    //   didChange: (event, next) => {
+    //     // debugger
+    //     next(event);
+    //   },
+    // }
   };
 
   // Create the language client and start the client.
-  client = new LanguageClient(
-    'linthtml',
-    'LintHTML Language Server',
-    serverOptions,
-    clientOptions
-  );
-
-  // Start the client. This will also launch the server
-  // client.start();
+  try {
+    client = new LanguageClient(
+      'linthtml',
+      'LintHTML Language Server',
+      serverOptions,
+      clientOptions
+      );
+    
+    // Start the client. This will also launch the server
+    // client.start();
     // debugger
-  context.subscriptions.push(new SettingMonitor(client, 'linthtml.enable').start());
+    context.subscriptions.push(new SettingMonitor(client, 'linthtml.enable').start());
+  } catch (error) {
+    console.log(`LintHTML: ${error.message}`);
+  }
 }
 
 export function deactivate(): Thenable<void> | undefined {
