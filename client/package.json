@@ -2,7 +2,7 @@
   "name": "linthtml-client",
   "description": "VSCode part of a language server",
   "license": "Apache License 2.0",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Benjamin JEGARD",
   "publisher": "kamikillerto",
   "repository": {
@@ -17,7 +17,8 @@
     "postinstall": "vscode-install"
   },
   "dependencies": {
-    "vscode-languageclient": "5.2.1"
+    "vscode-languageclient": "5.2.1",
+    "semver": "^5.5.0"
   },
   "devDependencies": {
     "vscode": "1.1.33"
