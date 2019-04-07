@@ -71,6 +71,7 @@ export function activate(context: ExtensionContext) {
     // client.start();
     // debugger
     context.subscriptions.push(new SettingMonitor(client, 'linthtml.enable').start());
+    console.log("Start!!!!!!!!!!!!!!")
   } catch (error) {
     console.log(`LintHTML: ${error.message}`);
   }

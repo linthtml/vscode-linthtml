@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@linthtml/linthtml": "0.1.0",
-    "vscode-languageserver": "5.2.1",
+    "vscode-languageserver": "5.1.0",
     "cosmiconfig": "5.1.0"
   },
   "scripts": {}
