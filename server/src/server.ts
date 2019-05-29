@@ -75,7 +75,7 @@ connection.onInitialized(() => {
 });
 
 // The example settings
-interface IExampleSettings {
+interface ExtensionSettings {
   enabled: boolean;
   configFile: string|null;
 }
@@ -107,18 +107,18 @@ interface Issue {
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: IExampleSettings = { enabled: true, configFile: null };
-let globalSettings: IExampleSettings = defaultSettings;
+const defaultSettings: ExtensionSettings = { enabled: true, configFile: null };
+let globalSettings: ExtensionSettings = defaultSettings;
 
 // Cache the settings of all open documents
-const documentSettings: Map<string, Thenable<IExampleSettings>> = new Map();
+let documentSettings: Map<string, Thenable<ExtensionSettings>> = new Map();
 
 connection.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
     // Reset all cached document settings
     documentSettings.clear();
   } else {
-    globalSettings = (
+    globalSettings = <ExtensionSettings>(
       (change.settings.languageServerExample || defaultSettings)
     ) as IExampleSettings;
   }
@@ -127,7 +127,7 @@ connection.onDidChangeConfiguration((change) => {
   documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<IExampleSettings> {
+function getDocumentSettings(resource: string): Thenable<ExtensionSettings> {
   if (!hasConfigurationCapability) {
     return Promise.resolve(globalSettings);
   }
@@ -178,68 +178,30 @@ async function findFileWorkspace(textDocument: TextDocument): Promise<string> {
   return workspaces.map(transform).sort(sort)[0].dir;
 }
 
-async function getLocaleConfig(textDocument: TextDocument) {
-  const filePath = Files.uriToFilePath(textDocument.uri);
-  const documentPath = path.parse(filePath);
-  try {
-    return getConfig(documentPath.dir); // if error ?
-  } catch (e) {
-    //
+function cannotReadConfig(filePath: string): Error {
+  let isDirectory: boolean = false;
+  let error: Error = new Error(`Cannot read config file "${filePath}"`);
+  try { 
+    isDirectory = fs.lstatSync(filePath).isDirectory();
+  } catch(e) {
+  } finally {
+    if (isDirectory) {
+      error = new Error(`Cannot read config file in directory "${filePath}"`);
+    }
   }
-  try {
-    const dir = await findFileWorkspace(textDocument);
-    return getConfig(dir);
-  } catch (e) {
-    //
-  }
-  return null;
+  return error;
 }
 
-function getConfig(filePath): object {
-  const explorer = cosmiconfig("linthtml", { stopDir: process.cwd(), packageProp: "linthtmlConfig"});
-  let isConfigDirectory = false;
+async function checkConfig(config: any) {
   try {
-    let config = null;
-    isConfigDirectory = fs.lstatSync(filePath).isDirectory();
-    if (isConfigDirectory) {
-      config = cosmiconfig("linthtml", { stopDir: filePath, packageProp: "linthtmlConfig" }).searchSync(filePath);
-    } else {
-      config = explorer.loadSync(filePath);
-    }
-    if (config === null) {
-      throw new Error();
-    }
-    return config.config;
+    await linthtml("", config.config);
   } catch (error) {
-    if (isConfigDirectory) {
-      throw new Error(`Cannot read config file in directory "${filePath}"`);
-    } else {
-      throw new Error(`Cannot read config file "${filePath}"`);
-    }
+    return error;
   }
 }
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-    // In this simple example we get the settings for every validate run.
-  const settings = await getDocumentSettings(textDocument.uri);
-  let options = null;
-  if (settings.configFile === null) {
-    options = await getLocaleConfig(textDocument);
-  } else {
-    try {
-      options = getConfig(settings.configFile);
-    } catch (error) {
-      // display error message
-    }
-  }
-
-  // settings.config
-  // The validator creates diagnostics for all uppercase words length 2 and more
-  const text = textDocument.getText();
-
-  const diagnostics: Diagnostic[] = [];
-
-  const issues: Issue[] = await linthtml(text, options);
+function printDiagnostics(issues :Issue[], textDocument: TextDocument) {
+  let diagnostics: Diagnostic[] = [];
 
   issues.forEach((issue: Issue) => {
     const diagnostic: Diagnostic = {
@@ -254,11 +216,71 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     };
     diagnostics.push(diagnostic);
   });
-
   // Send the computed diagnostics to VSCode.
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-connection.onDidChangeWatchedFiles((/*change*/) => {
+
+async function getLocaleConfig(textDocument: TextDocument) {
+  const filePath = Files.uriToFilePath(textDocument.uri);
+  let workspace: string = await findFileWorkspace(textDocument);
+	const explorer = cosmiconfig('linthtml', { stopDir: workspace, packageProp: 'linthtmlConfig'});
+  try {
+    return explorer.searchSync(filePath);    
+  } catch (error) {
+    return null;
+  }
+}
+
+function readConfigFromFile(configFile: string): any | never {
+  try {
+    const explorer = cosmiconfig('linthtml', { packageProp: 'linthtmlConfig'});
+    return explorer.loadSync(configFile);
+  } catch (error) {
+    throw cannotReadConfig(configFile);
+  }
+}
+
+async function getConfigForFile(textDocument: TextDocument): Promise<any> | never {
+
+  let settings: ExtensionSettings = await getDocumentSettings(textDocument.uri);
+  
+  if (settings.configFile !== null) {
+    return readConfigFromFile(settings.configFile);
+  }
+  return getLocaleConfig(textDocument);
+}
+
+async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+  // In this simple example we get the settings for every validate run.
+  try {
+    let config = await getConfigForFile(textDocument);
+    
+    if (config !== null) {
+      let error = await checkConfig(config);
+      if (error) {
+        return connection.window.showErrorMessage(`linthtml: ${error.message}. Check your config file ${config.filepath}.`);
+      }
+      config = config.config;
+    }
+    
+    return lint(textDocument, config);
+  } catch (error) {
+    return connection.window.showErrorMessage(`linthtml: ${error.message}`);
+  }
+}
+
+async function lint(textDocument: TextDocument, config: any) {
+  const filePath = Files.uriToFilePath(textDocument.uri);
+  let text = textDocument.getText();
+  try {
+    const issues :Issue[] = await linthtml(text, config);
+    printDiagnostics(issues, textDocument);
+  } catch (error) {
+    return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${filePath}`);
+  }
+}
+
+connection.onDidChangeWatchedFiles(_change => {
   // changes globalConfig
   // need to load config once before ^^
   documents.all().forEach((file) => validateTextDocument(file));
