@@ -59,7 +59,7 @@
     "watch": "tsc -b -w",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "test": "sh ./scripts/e2e.sh",
-    "lint": "node_modules/.bin/tslint -c tslint.json --project tsconfig.json"
+    "lint": "node_modules/.bin/tslint -c tslint.json {server,client}/src/**/*.ts"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.6",
