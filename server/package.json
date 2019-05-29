@@ -13,7 +13,7 @@
     "url": "https://github.com/linthtml/vscode-linthtml"
   },
   "dependencies": {
-    "@linthtml/linthtml": "0.1.0",
+    "@linthtml/linthtml": "0.2.1",
     "cosmiconfig": "5.1.0",
     "vscode-languageserver": "^4.1.3"
   },
