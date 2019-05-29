@@ -3,31 +3,31 @@
 * Licensed under the MIT License. See License.txt in the project root for license information.
 * ------------------------------------------------------------------------------------------ */
 
-import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import * as path from "path";
+import { ExtensionContext, workspace } from "vscode";
 
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
-  TransportKind,
-  SettingMonitor
-} from 'vscode-languageclient';
+  SettingMonitor,
+  TransportKind
+} from "vscode-languageclient";
 
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
   // The server is implemented in node
-  let serverModule = context.asAbsolutePath(
-    path.join('server', 'out', 'server.js')
+  const serverModule = context.asAbsolutePath(
+    path.join("server", "out", "server.js")
   );
   // The debug options for the server
   // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
-  let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+  const debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
-  let serverOptions: ServerOptions = {
+  const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },
     debug: {
       module: serverModule,
@@ -37,14 +37,14 @@ export function activate(context: ExtensionContext) {
   };
 
   // Options to control the language client
-  let clientOptions: LanguageClientOptions = {
-		diagnosticCollectionName: 'linthtml',
+  const clientOptions: LanguageClientOptions = {
+		diagnosticCollectionName: "linthtml",
     // Register the server for plain html documents
-    documentSelector: [{ scheme: 'file', language: 'html' }],
+    documentSelector: [{ scheme: "file", language: "html" }],
     synchronize: {
-      configurationSection: 'linthtml',
+      configurationSection: "linthtml",
       // Notify the server about file changes to '.linthtmlrc.* files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.linthtmlrc*')
+      fileEvents: workspace.createFileSystemWatcher("**/.linthtmlrc*")
     },
     // middleware: {
     //   didOpen: (document, next) => {
@@ -61,17 +61,17 @@ export function activate(context: ExtensionContext) {
   // Create the language client and start the client.
   try {
     client = new LanguageClient(
-      'linthtml',
-      'LintHTML Language Server',
+      "linthtml",
+      "LintHTML Language Server",
       serverOptions,
       clientOptions
       );
-    
+
     // Start the client. This will also launch the server
     // client.start();
     // debugger
-    context.subscriptions.push(new SettingMonitor(client, 'linthtml.enable').start());
-    console.log("Start!!!!!!!!!!!!!!")
+    context.subscriptions.push(new SettingMonitor(client, "linthtml.enable").start());
+    console.log("Start!!!!!!!!!!!!!!");
   } catch (error) {
     console.log(`LintHTML: ${error.message}`);
   }
