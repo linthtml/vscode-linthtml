@@ -13,5 +13,5 @@
     "triple-equals": true,
     "trailing-comma": false
   },
-  "defaultSeverity": "warning"
+  "defaultSeverity": "error"
 }
