@@ -75,10 +75,11 @@ connection.onInitialized(() => {
 });
 
 // The example settings
-interface ExtensionSettings {
+interface IExtensionSettings {
   enabled: boolean;
   configFile: string|null;
 }
+
 interface IssueData {
   attribute?: string; // E001, E011
   /* E011 */
@@ -107,27 +108,27 @@ interface Issue {
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExtensionSettings = { enabled: true, configFile: null };
-let globalSettings: ExtensionSettings = defaultSettings;
+const defaultSettings: IExtensionSettings = { enabled: true, configFile: null };
+let globalSettings: IExtensionSettings = defaultSettings;
 
 // Cache the settings of all open documents
-let documentSettings: Map<string, Thenable<ExtensionSettings>> = new Map();
+const documentSettings: Map<string, Thenable<IExtensionSettings>> = new Map();
 
 connection.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
     // Reset all cached document settings
     documentSettings.clear();
   } else {
-    globalSettings = <ExtensionSettings>(
+    globalSettings = (
       (change.settings.languageServerExample || defaultSettings)
-    ) as IExampleSettings;
+    ) as IExtensionSettings;
   }
 
   // Revalidate all open text documents
   documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ExtensionSettings> {
+function getDocumentSettings(resource: string): Thenable<IExtensionSettings> {
   if (!hasConfigurationCapability) {
     return Promise.resolve(globalSettings);
   }
@@ -181,9 +182,10 @@ async function findFileWorkspace(textDocument: TextDocument): Promise<string> {
 function cannotReadConfig(filePath: string): Error {
   let isDirectory: boolean = false;
   let error: Error = new Error(`Cannot read config file "${filePath}"`);
-  try { 
+  try {
     isDirectory = fs.lstatSync(filePath).isDirectory();
-  } catch(e) {
+  } catch (e) {
+    //
   } finally {
     if (isDirectory) {
       error = new Error(`Cannot read config file in directory "${filePath}"`);
@@ -200,8 +202,8 @@ async function checkConfig(config: any) {
   }
 }
 
-function printDiagnostics(issues :Issue[], textDocument: TextDocument) {
-  let diagnostics: Diagnostic[] = [];
+function printDiagnostics(issues: Issue[], textDocument: TextDocument) {
+  const diagnostics: Diagnostic[] = [];
 
   issues.forEach((issue: Issue) => {
     const diagnostic: Diagnostic = {
@@ -222,10 +224,10 @@ function printDiagnostics(issues :Issue[], textDocument: TextDocument) {
 
 async function getLocaleConfig(textDocument: TextDocument) {
   const filePath = Files.uriToFilePath(textDocument.uri);
-  let workspace: string = await findFileWorkspace(textDocument);
-	const explorer = cosmiconfig('linthtml', { stopDir: workspace, packageProp: 'linthtmlConfig'});
+  const workspace: string = await findFileWorkspace(textDocument);
+  const explorer = cosmiconfig("linthtml", { stopDir: workspace, packageProp: "linthtmlConfig"});
   try {
-    return explorer.searchSync(filePath);    
+    return explorer.searchSync(filePath);
   } catch (error) {
     return null;
   }
@@ -233,7 +235,7 @@ async function getLocaleConfig(textDocument: TextDocument) {
 
 function readConfigFromFile(configFile: string): any | never {
   try {
-    const explorer = cosmiconfig('linthtml', { packageProp: 'linthtmlConfig'});
+    const explorer = cosmiconfig("linthtml", { packageProp: "linthtmlConfig"});
     return explorer.loadSync(configFile);
   } catch (error) {
     throw cannotReadConfig(configFile);
@@ -241,9 +243,8 @@ function readConfigFromFile(configFile: string): any | never {
 }
 
 async function getConfigForFile(textDocument: TextDocument): Promise<any> | never {
+  const settings: IExtensionSettings = await getDocumentSettings(textDocument.uri);
 
-  let settings: ExtensionSettings = await getDocumentSettings(textDocument.uri);
-  
   if (settings.configFile !== null) {
     return readConfigFromFile(settings.configFile);
   }
@@ -254,15 +255,15 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   // In this simple example we get the settings for every validate run.
   try {
     let config = await getConfigForFile(textDocument);
-    
+
     if (config !== null) {
-      let error = await checkConfig(config);
+      const error: Error = await checkConfig(config);
       if (error) {
         return connection.window.showErrorMessage(`linthtml: ${error.message}. Check your config file ${config.filepath}.`);
       }
       config = config.config;
     }
-    
+
     return lint(textDocument, config);
   } catch (error) {
     return connection.window.showErrorMessage(`linthtml: ${error.message}`);
@@ -271,16 +272,16 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 async function lint(textDocument: TextDocument, config: any) {
   const filePath = Files.uriToFilePath(textDocument.uri);
-  let text = textDocument.getText();
+  const text = textDocument.getText();
   try {
-    const issues :Issue[] = await linthtml(text, config);
+    const issues: Issue[] = await linthtml(text, config);
     printDiagnostics(issues, textDocument);
   } catch (error) {
     return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${filePath}`);
   }
 }
 
-connection.onDidChangeWatchedFiles(_change => {
+connection.onDidChangeWatchedFiles((/*change*/) => {
   // changes globalConfig
   // need to load config once before ^^
   documents.all().forEach((file) => validateTextDocument(file));
@@ -297,12 +298,12 @@ connection.onCompletion(
     // Return completion of linthtml rules
     return [
       // {
-      //   label: 'TypeScript',
+      //   label: "TypeScript",
       //   kind: CompletionItemKind.Text,
       //   data: 1
       // },
       // {
-      //   label: 'JavaScript',
+      //   label: "JavaScript",
       //   kind: CompletionItemKind.Text,
       //   data: 2
       // }
@@ -315,11 +316,11 @@ connection.onCompletion(
 // connection.onCompletionResolve(
 //   (item: CompletionItem): CompletionItem => {
 //     if (item.data === 1) {
-//       (item.detail = 'TypeScript details'),
-//         (item.documentation = 'TypeScript documentation');
+//       (item.detail = "TypeScript details"),
+//         (item.documentation = "TypeScript documentation");
 //     } else if (item.data === 2) {
-//       (item.detail = 'JavaScript details'),
-//         (item.documentation = 'JavaScript documentation');
+//       (item.detail = "JavaScript details"),
+//         (item.documentation = "JavaScript documentation");
 //     }
 //     return item;
 //   }
