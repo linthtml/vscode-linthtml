@@ -9,7 +9,6 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   CompletionItem,
-  CompletionItemKind,
   createConnection,
   Diagnostic,
   DiagnosticSeverity,
@@ -18,9 +17,7 @@ import {
   InitializeParams,
   Position,
   ProposedFeatures,
-  Range,
   TextDocument,
-  TextDocumentPositionParams,
   TextDocuments,
   WorkspaceFolder
 } from "vscode-languageserver";
@@ -80,28 +77,12 @@ interface IExtensionSettings {
   configFile: string|null;
 }
 
-interface IssueData {
-  attribute?: string; // E001, E011
-  /* E011 */
-  format?: string;
-  value?: string;
-  /* E023 */
-  chars?: string;
-  desc?: string;
-  part?: string;
-  /* E036 */
-  width?: number;
-  /* E037 */
-  limit?: number;
-}
-
-interface Issue {
+interface ILintHtmlIssue {
   code: string;
   column: number;
   line: number;
 
   rule: string;
-  data: IssueData;
   msg: string;
 }
 
@@ -202,10 +183,10 @@ async function checkConfig(config: any) {
   }
 }
 
-function printDiagnostics(issues: Issue[], textDocument: TextDocument) {
+function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument) {
   const diagnostics: Diagnostic[] = [];
 
-  issues.forEach((issue: Issue) => {
+  issues.forEach((issue: ILintHtmlIssue) => {
     const diagnostic: Diagnostic = {
       severity: DiagnosticSeverity.Error,
       range: {
@@ -214,7 +195,7 @@ function printDiagnostics(issues: Issue[], textDocument: TextDocument) {
       },
       code: issue.rule,
       source: "linthtml",
-      message: generateIssueMessage(issue)
+      message: issue.msg || linthtml.messages.renderIssue(issue)
     };
     diagnostics.push(diagnostic);
   });
@@ -274,7 +255,7 @@ async function lint(textDocument: TextDocument, config: any) {
   const filePath = Files.uriToFilePath(textDocument.uri);
   const text = textDocument.getText();
   try {
-    const issues: Issue[] = await linthtml(text, config);
+    const issues: ILintHtmlIssue[] = await linthtml(text, config);
     printDiagnostics(issues, textDocument);
   } catch (error) {
     return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${filePath}`);
@@ -350,20 +331,3 @@ documents.listen(connection);
 
 // Listen on the connection
 connection.listen();
-
-function generateIssueMessage(issue: Issue) {
-  switch (issue.code) {
-    case "E001":
-      return `The attribute "${issue.data.attribute}" is banned`;
-    case "E003":
-      return `The attribute "${issue.data.attribute}" is duplicated`;
-    case "E011":
-      return `Value "${issue.data.value}" of attribute "${issue.data.attribute}" does not respect the format '${issue.data.format}'`;
-    case "E036":
-      return `Wrong indentation, expected indentation of ${issue.data.width}`;
-    case "E037":
-      return `Only ${issue.data.limit} attributes per line are permitted`;
-    default:
-      return issue.msg || linthtml.messages.renderIssue(issue);
-  }
-}
