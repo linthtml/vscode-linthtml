@@ -3,41 +3,41 @@
 * Licensed under the MIT License. See License.txt in the project root for license information.
 * ------------------------------------------------------------------------------------------ */
 
+import * as linthtml from "@linthtml/linthtml";
+import * as cosmiconfig from "cosmiconfig";
+import * as fs from "fs";
+import * as path from "path";
 import {
-  createConnection,
-  TextDocuments,
-  TextDocument,
-  Diagnostic,
-  DiagnosticSeverity,
-  ProposedFeatures,
-  InitializeParams,
-  DidChangeConfigurationNotification,
   CompletionItem,
   CompletionItemKind,
-  TextDocumentPositionParams,
-  Position,
-  Range,
+  createConnection,
+  Diagnostic,
+  DiagnosticSeverity,
+  DidChangeConfigurationNotification,
   Files,
+  InitializeParams,
+  Position,
+  ProposedFeatures,
+  Range,
+  TextDocument,
+  TextDocumentPositionParams,
+  TextDocuments,
   WorkspaceFolder
-} from 'vscode-languageserver';
-import * as linthtml from '@linthtml/linthtml'; 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as cosmiconfig from 'cosmiconfig';
+} from "vscode-languageserver";
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
-let connection = createConnection(ProposedFeatures.all);
+const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
-let documents: TextDocuments = new TextDocuments();
+const documents: TextDocuments = new TextDocuments();
 
 let hasConfigurationCapability: boolean = false;
 let hasWorkspaceFolderCapability: boolean = false;
 let hasDiagnosticRelatedInformationCapability: boolean = false;
 
 connection.onInitialize((params: InitializeParams) => {
-  let capabilities = params.capabilities;
+  const capabilities = params.capabilities;
 
   // Does the client support the `workspace/configuration` request?
   // If not, we will fall back using global settings
@@ -68,66 +68,66 @@ connection.onInitialized(() => {
     );
   }
   if (hasWorkspaceFolderCapability) {
-    connection.workspace.onDidChangeWorkspaceFolders(_event => {
-      connection.console.log('Workspace folder change event received.');
+    connection.workspace.onDidChangeWorkspaceFolders((/*event*/) => {
+      connection.console.log("Workspace folder change event received.");
     });
   }
 });
 
 // The example settings
-interface ExampleSettings {
+interface IExampleSettings {
   enabled: boolean;
   configFile: string|null;
 }
-interface IssueData { 
-  attribute?: string; // E001, E011 
+interface IssueData {
+  attribute?: string; // E001, E011
   /* E011 */
-  format?: string; 
-  value?: string; 
-  /* E023 */ 
-  chars?: string; 
-  desc?: string; 
-  part?: string; 
-  /* E036 */ 
-  width?: number; 
-  /* E037 */ 
-  limit?: number; 
-} 
+  format?: string;
+  value?: string;
+  /* E023 */
+  chars?: string;
+  desc?: string;
+  part?: string;
+  /* E036 */
+  width?: number;
+  /* E037 */
+  limit?: number;
+}
 
-interface Issue { 
-  code: string; 
-  column: number; 
-  line: number; 
+interface Issue {
+  code: string;
+  column: number;
+  line: number;
 
-  rule: string; 
-  data: IssueData; 
+  rule: string;
+  data: IssueData;
   msg: string;
-} 
+}
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { enabled: true, configFile: null };
-let globalSettings: ExampleSettings = defaultSettings;
+const defaultSettings: IExampleSettings = { enabled: true, configFile: null };
+let globalSettings: IExampleSettings = defaultSettings;
 
 // Cache the settings of all open documents
-let documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
+const documentSettings: Map<string, Thenable<IExampleSettings>> = new Map();
 
-connection.onDidChangeConfiguration(change => {
+connection.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
     // Reset all cached document settings
     documentSettings.clear();
   } else {
-    globalSettings = <ExampleSettings>(
+    globalSettings = (
       (change.settings.languageServerExample || defaultSettings)
-    );
+    ) as IExampleSettings;
   }
 
   // Revalidate all open text documents
   documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
+function getDocumentSettings(resource: string): Thenable<IExampleSettings> {
   if (!hasConfigurationCapability) {
     return Promise.resolve(globalSettings);
   }
@@ -135,7 +135,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
   if (!result) {
     result = connection.workspace.getConfiguration({
       scopeUri: resource,
-      section: 'linthtml'
+      section: "linthtml"
     });
     documentSettings.set(resource, result);
   }
@@ -143,20 +143,20 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 }
 
 // Only keep settings for open documents
-documents.onDidClose(e => {
+documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
 });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
+documents.onDidChangeContent((change) => {
   validateTextDocument(change.document);
 });
 
 async function findFileWorkspace(textDocument: TextDocument): Promise<string> {
-  let filePath = Files.uriToFilePath(textDocument.uri);
-  let workspaces = await connection.workspace.getWorkspaceFolders();
-  
+  const filePath = Files.uriToFilePath(textDocument.uri);
+  const workspaces = await connection.workspace.getWorkspaceFolders();
+
   function transform(workspace: WorkspaceFolder): {dir: string, length: number} {
     const dir = Files.uriToFilePath(workspace.uri);
     return {
@@ -165,7 +165,7 @@ async function findFileWorkspace(textDocument: TextDocument): Promise<string> {
     };
   }
 
-  function sort(a: {dir: string, length: number}, b:{dir: string, length: number}): number {
+  function sort(a: {dir: string, length: number}, b: {dir: string, length: number}): number {
     if (a.length > b.length) {
       return 1;
     } else if (a.length < b.length) {
@@ -183,22 +183,26 @@ async function getLocaleConfig(textDocument: TextDocument) {
   const documentPath = path.parse(filePath);
   try {
     return getConfig(documentPath.dir); // if error ?
-  } catch (e) {}
+  } catch (e) {
+    //
+  }
   try {
-    let dir = await findFileWorkspace(textDocument);
+    const dir = await findFileWorkspace(textDocument);
     return getConfig(dir);
-  } catch(e) {}
+  } catch (e) {
+    //
+  }
   return null;
 }
 
 function getConfig(filePath): object {
-  const explorer = cosmiconfig('linthtml', { stopDir: process.cwd(), packageProp: 'linthtmlConfig'});
+  const explorer = cosmiconfig("linthtml", { stopDir: process.cwd(), packageProp: "linthtmlConfig"});
   let isConfigDirectory = false;
   try {
     let config = null;
     isConfigDirectory = fs.lstatSync(filePath).isDirectory();
     if (isConfigDirectory) {
-      config = cosmiconfig('linthtml', { stopDir: filePath, packageProp: 'linthtmlConfig' }).searchSync(filePath);
+      config = cosmiconfig("linthtml", { stopDir: filePath, packageProp: "linthtmlConfig" }).searchSync(filePath);
     } else {
       config = explorer.loadSync(filePath);
     }
@@ -217,7 +221,7 @@ function getConfig(filePath): object {
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // In this simple example we get the settings for every validate run.
-  let settings = await getDocumentSettings(textDocument.uri);
+  const settings = await getDocumentSettings(textDocument.uri);
   let options = null;
   if (settings.configFile === null) {
     options = await getLocaleConfig(textDocument);
@@ -231,21 +235,21 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
   // settings.config
   // The validator creates diagnostics for all uppercase words length 2 and more
-  let text = textDocument.getText();
+  const text = textDocument.getText();
 
-  let diagnostics: Diagnostic[] = [];
+  const diagnostics: Diagnostic[] = [];
 
-  const issues :Issue[] = await linthtml(text, options);
+  const issues: Issue[] = await linthtml(text, options);
 
   issues.forEach((issue: Issue) => {
-    let diagnostic: Diagnostic = { 
-      severity: DiagnosticSeverity.Error, 
-      range: { 
-        start: Position.create(issue.line - 1, issue.column), 
-        end: Position.create(issue.line - 1, issue.column + 1) 
-      }, 
+    const diagnostic: Diagnostic = {
+      severity: DiagnosticSeverity.Error,
+      range: {
+        start: Position.create(issue.line - 1, issue.column),
+        end: Position.create(issue.line - 1, issue.column + 1)
+      },
       code: issue.rule,
-      source: 'linthtml',
+      source: "linthtml",
       message: generateIssueMessage(issue)
     };
     diagnostics.push(diagnostic);
@@ -254,17 +258,17 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   // Send the computed diagnostics to VSCode.
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-connection.onDidChangeWatchedFiles(_change => {
+connection.onDidChangeWatchedFiles((/*change*/) => {
   // changes globalConfig
   // need to load config once before ^^
-  documents.all().forEach(file => validateTextDocument(file));
+  documents.all().forEach((file) => validateTextDocument(file));
   // Monitored files have change in VSCode
-  connection.console.log('We received an file change event');
+  connection.console.log("We received an file change event");
 });
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
-  (_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+  (/*textDocumentPosition: TextDocumentPositionParams*/): CompletionItem[] => {
     // The pass parameter contains the position of the text document in
     // which code complete got requested. For the example we ignore this
     // info and always provide the same completion items.
@@ -300,21 +304,18 @@ connection.onCompletion(
 // );
 
 connection.onDidOpenTextDocument((params) => {
-  debugger
   // A text document got opened in VSCode.
   // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
   // params.text the initial full content of the document.
   connection.console.log(`${params.textDocument.uri} opened.`);
 });
 connection.onDidChangeTextDocument((params) => {
-  debugger
   // The content of a text document did change in VSCode.
   // params.uri uniquely identifies the document.
   // params.contentChanges describe the content changes to the document.
   connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
 });
 connection.onDidCloseTextDocument((params) => {
-  debugger
   // A text document got closed in VSCode.
   // params.uri uniquely identifies the document.
   connection.console.log(`${params.textDocument.uri} closed.`);
@@ -328,18 +329,18 @@ documents.listen(connection);
 connection.listen();
 
 function generateIssueMessage(issue: Issue) {
-  switch(issue.code) { 
-    case 'E001': 
-      return `The attribute "${issue.data.attribute}" is banned`; 
-    case 'E003': 
-      return `The attribute "${issue.data.attribute}" is duplicated`; 
-    case 'E011': 
-      return `Value "${issue.data.value}" of attribute "${issue.data.attribute}" does not respect the format '${issue.data.format}'`; 
-    case 'E036': 
-      return `Wrong indentation, expected indentation of ${issue.data.width}`; 
-    case 'E037': 
-      return `Only ${issue.data.limit} attributes per line are permitted`; 
+  switch (issue.code) {
+    case "E001":
+      return `The attribute "${issue.data.attribute}" is banned`;
+    case "E003":
+      return `The attribute "${issue.data.attribute}" is duplicated`;
+    case "E011":
+      return `Value "${issue.data.value}" of attribute "${issue.data.attribute}" does not respect the format '${issue.data.format}'`;
+    case "E036":
+      return `Wrong indentation, expected indentation of ${issue.data.width}`;
+    case "E037":
+      return `Only ${issue.data.limit} attributes per line are permitted`;
     default:
-      return issue.msg || linthtml.messages.renderIssue(issue); 
-  } 
+      return issue.msg || linthtml.messages.renderIssue(issue);
+  }
 }
