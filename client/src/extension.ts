@@ -38,7 +38,7 @@ export function activate(context: ExtensionContext) {
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
-		diagnosticCollectionName: "linthtml",
+    diagnosticCollectionName: "linthtml",
     // Register the server for plain html documents
     documentSelector: [{ scheme: "file", language: "html" }],
     synchronize: {
@@ -69,11 +69,12 @@ export function activate(context: ExtensionContext) {
 
     // Start the client. This will also launch the server
     // client.start();
-    // debugger
     context.subscriptions.push(new SettingMonitor(client, "linthtml.enable").start());
+    /* tslint:disable no-console */
     console.log("Start!!!!!!!!!!!!!!");
   } catch (error) {
     console.log(`LintHTML: ${error.message}`);
+    /* tslint:enable no-console */
   }
 }
 

@@ -23,7 +23,9 @@ export async function activate(docUri: vscode.Uri) {
     editor = await vscode.window.showTextDocument(doc);
     await sleep(2000); // Wait for server activation
   } catch (e) {
+    /* tslint:disable no-console */
     console.error(e);
+    /* tslint:enable no-console */
   }
 }
 

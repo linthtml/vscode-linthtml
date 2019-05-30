@@ -68,14 +68,14 @@ connection.onInitialized(() => {
     );
   }
   if (hasWorkspaceFolderCapability) {
-    connection.workspace.onDidChangeWorkspaceFolders((_event) => {
+    connection.workspace.onDidChangeWorkspaceFolders((/*event*/) => {
       connection.console.log("Workspace folder change event received.");
     });
   }
 });
 
 // The example settings
-interface ExampleSettings {
+interface IExampleSettings {
   enabled: boolean;
   configFile: string|null;
 }
@@ -107,11 +107,11 @@ interface Issue {
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { enabled: true, configFile: null };
-let globalSettings: ExampleSettings = defaultSettings;
+const defaultSettings: IExampleSettings = { enabled: true, configFile: null };
+let globalSettings: IExampleSettings = defaultSettings;
 
 // Cache the settings of all open documents
-const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
+const documentSettings: Map<string, Thenable<IExampleSettings>> = new Map();
 
 connection.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
@@ -120,14 +120,14 @@ connection.onDidChangeConfiguration((change) => {
   } else {
     globalSettings = (
       (change.settings.languageServerExample || defaultSettings)
-    ) as ExampleSettings;
+    ) as IExampleSettings;
   }
 
   // Revalidate all open text documents
   documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
+function getDocumentSettings(resource: string): Thenable<IExampleSettings> {
   if (!hasConfigurationCapability) {
     return Promise.resolve(globalSettings);
   }
@@ -183,11 +183,15 @@ async function getLocaleConfig(textDocument: TextDocument) {
   const documentPath = path.parse(filePath);
   try {
     return getConfig(documentPath.dir); // if error ?
-  } catch (e) {}
+  } catch (e) {
+    //
+  }
   try {
     const dir = await findFileWorkspace(textDocument);
     return getConfig(dir);
-  } catch (e) {}
+  } catch (e) {
+    //
+  }
   return null;
 }
 
@@ -254,7 +258,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   // Send the computed diagnostics to VSCode.
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-connection.onDidChangeWatchedFiles((_change) => {
+connection.onDidChangeWatchedFiles((/*change*/) => {
   // changes globalConfig
   // need to load config once before ^^
   documents.all().forEach((file) => validateTextDocument(file));
@@ -264,7 +268,7 @@ connection.onDidChangeWatchedFiles((_change) => {
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
-  (_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+  (/*textDocumentPosition: TextDocumentPositionParams*/): CompletionItem[] => {
     // The pass parameter contains the position of the text document in
     // which code complete got requested. For the example we ignore this
     // info and always provide the same completion items.
@@ -300,21 +304,18 @@ connection.onCompletion(
 // );
 
 connection.onDidOpenTextDocument((params) => {
-  debugger;
   // A text document got opened in VSCode.
   // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
   // params.text the initial full content of the document.
   connection.console.log(`${params.textDocument.uri} opened.`);
 });
 connection.onDidChangeTextDocument((params) => {
-  debugger;
   // The content of a text document did change in VSCode.
   // params.uri uniquely identifies the document.
   // params.contentChanges describe the content changes to the document.
   connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
 });
 connection.onDidCloseTextDocument((params) => {
-  debugger;
   // A text document got closed in VSCode.
   // params.uri uniquely identifies the document.
   connection.console.log(`${params.textDocument.uri} closed.`);
