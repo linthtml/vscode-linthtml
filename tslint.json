@@ -13,9 +13,7 @@
     "triple-equals": true,
     "trailing-comma": false,
     "object-literal-sort-keys": false,
-    "max-line-length": {
-      "severity": "warning"
-    }
+    "max-line-length": false
   },
   "defaultSeverity": "error"
 }
