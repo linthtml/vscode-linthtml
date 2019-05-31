@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.2.0]
+
+- [FEAT] Upgrade to linthtml@0.2.0
+- [FEAT] Replay linthtml's errors as errors notification
+
 ## [0.1.0]
 
 - First release

@@ -3,11 +3,11 @@
 * Licensed under the MIT License. See License.txt in the project root for license information.
 * ------------------------------------------------------------------------------------------ */
 
-import * as vscode from 'vscode';
-import * as assert from 'assert';
-import { getDocUri, activate } from './helper';
+import * as assert from "assert";
+import * as vscode from "vscode";
+import { activate, getDocUri } from "./helper";
 
-describe('Should get diagnostics', () => {
+describe("Should get diagnostics", () => {
 
   // it('Should use linthtml default rules', async () => {
   //   const docUri = getDocUri('diagnostics.html');
@@ -19,8 +19,8 @@ describe('Should get diagnostics', () => {
   //   ]);
   // });
 
-  it('Should use config htmlint rules using local .linthtmlrc file', async () => {
-    const docUri = getDocUri('with-config-file/diagnostics.html');
+  it("Should use config htmlint rules using local .linthtmlrc file", async () => {
+    const docUri = getDocUri("with-config-file/diagnostics.html");
     await testDiagnostics(docUri, [
     ]);
 
