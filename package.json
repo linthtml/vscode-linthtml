@@ -49,6 +49,17 @@
           "type": "string",
           "default": null,
           "description": "Path to the LintHTML's config file to use."
+        },
+        "linthtml.packageManager": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "npm",
+            "yarn",
+            "pnpm"
+          ],
+          "default": "npm",
+          "description": "The package manager you use to install node modules."
         }
       }
     }
