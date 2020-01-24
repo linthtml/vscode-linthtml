@@ -45,17 +45,7 @@ export function activate(context: ExtensionContext) {
       configurationSection: "linthtml",
       // Notify the server about file changes to '.linthtmlrc.* files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.linthtmlrc*")
-    },
-    // middleware: {
-    //   didOpen: (document, next) => {
-    //     // debugger
-    //     next(document);
-    //   },
-    //   didChange: (event, next) => {
-    //     // debugger
-    //     next(event);
-    //   },
-    // }
+    }
   };
 
   // Create the language client and start the client.
@@ -65,13 +55,12 @@ export function activate(context: ExtensionContext) {
       "LintHTML Language Server",
       serverOptions,
       clientOptions
-      );
+    );
 
     // Start the client. This will also launch the server
     // client.start();
     context.subscriptions.push(new SettingMonitor(client, "linthtml.enable").start());
     /* tslint:disable no-console */
-    console.log("Start!!!!!!!!!!!!!!");
   } catch (error) {
     console.log(`LintHTML: ${error.message}`);
     /* tslint:enable no-console */

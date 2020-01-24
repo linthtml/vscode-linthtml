@@ -1,0 +1,84 @@
+import { execSync } from "child_process";
+import * as path from "path";
+import {
+  Files,
+  TextDocument
+} from "vscode-languageserver";
+import URI from "vscode-uri";
+import { getWorkspaceFolder } from "./get-workspace-folder";
+
+async function getLintHTML(textDocument: TextDocument, { connection, packageManager }: { connection: any, packageManager: string}) {
+  function trace(message, verbose) {
+    connection.tracer.log(message, verbose);
+  }
+  try {
+    const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace); // TODO: Use a setting or something to determine the package manager
+    // const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace);
+    const uri = URI.parse(textDocument.uri);
+
+    let cwd;
+
+    if (uri.scheme === "file") {
+      const file = uri.fsPath;
+      const directory = path.dirname(file);
+
+      cwd = directory;
+    } else {
+      const workspaceFolder = await getWorkspaceFolder(textDocument, connection);
+
+      cwd = workspaceFolder;
+    }
+
+    const lintHTMLPath = await Files.resolve(
+      "@linthtml/linthtml",
+      resolvedGlobalPackageManagerPath,
+      cwd,
+      trace,
+    );
+
+    return await import(lintHTMLPath);
+  } catch (error) {
+    throw new Error("Cannot find global or local @linthtml/linthtml package");
+  }
+}
+
+const globalPaths = {
+  yarn: {
+    cache: undefined,
+    get(trace) {
+      return Files.resolveGlobalYarnPath(trace);
+    },
+  },
+  npm: {
+    cache: undefined,
+    get(trace) {
+      return Files.resolveGlobalNodePath(trace);
+    },
+  },
+  pnpm: {
+    cache: undefined,
+    get() {
+      const pnpmPath = execSync("pnpm root -g")
+        .toString()
+        .trim();
+
+      return pnpmPath;
+    },
+  },
+};
+
+function globalPathGet(packageManager, trace) {
+  const pm = globalPaths[packageManager];
+
+  if (pm) {
+    if (pm.cache === undefined) {
+      pm.cache = pm.get(trace);
+    }
+
+    return pm.cache;
+  }
+
+  return undefined;
+}
+
+export { getLintHTML };
