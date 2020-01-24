@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.3.0]
+
+- [FEAT] Use local/global @linthtml/linthtml package
+- [FEAT] Stop including @linthtml/linthtml package in extension build
+
 ## [0.2.0]
 
 - [FEAT] Upgrade to linthtml@0.2.0
