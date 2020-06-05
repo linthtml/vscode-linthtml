@@ -136,11 +136,17 @@ async function checkConfig(config: any, lintHTML) {
   }
 }
 
+function generateSeverity(issue: ILintHtmlIssue) {
+  return issue.severity === "warning"
+    ? DiagnosticSeverity.Warning
+    : DiagnosticSeverity.Error;
+}
+
 function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, lintHTML) {
 
   const diagnostics: Diagnostic[] = issues.map((issue: ILintHtmlIssue) => {
     return {
-      severity: DiagnosticSeverity.Error,
+      severity: generateSeverity(issue),
       range: {
         start: Position.create(issue.line - 1, issue.column),
         end: Position.create(issue.line - 1, issue.column + 1)
