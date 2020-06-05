@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.4.0]
+
+- [FEAT] Display warning issues as warning
+
 ## [0.3.0]
 
 - [FEAT] Use local/global @linthtml/linthtml package
