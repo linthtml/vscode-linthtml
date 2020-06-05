@@ -5,6 +5,11 @@ interface IExtensionSettings {
   packageManager: string|null;
 }
 
+enum Severity {
+  ERROR = "error",
+  WARNING = "warning"
+}
+
 interface ILintHtmlIssue {
   code: string;
   column: number;
@@ -12,6 +17,7 @@ interface ILintHtmlIssue {
 
   rule: string;
   msg: string;
+  severity?: Severity;
 }
 
 export { IExtensionSettings, ILintHtmlIssue };
