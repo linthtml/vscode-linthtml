@@ -73,7 +73,7 @@
     "lint": "node_modules/.bin/tslint -c tslint.json {server,client}/src/**/*.ts --format codeFrame"
   },
   "devDependencies": {
-    "@types/mocha": "^5.2.6",
+    "@types/mocha": "^8.0.2",
     "@types/node": "^8.0.0",
     "tslint": "5.16.0",
     "typescript": "3.4.5"
