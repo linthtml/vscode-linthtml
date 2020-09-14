@@ -18,7 +18,7 @@ import {
 import { IExtensionSettings, ILintHtmlIssue } from "./types";
 import { getLintHTML } from "./vscode-linthtml/get-linthtml";
 import { localeConfig, readLocalConfig } from "./vscode-linthtml/local-config";
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument, Range } from 'vscode-languageserver-textdocument';
 
 // Create a connection for the server. The connection uses Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -144,15 +144,29 @@ function generateSeverity(issue: ILintHtmlIssue) {
     : DiagnosticSeverity.Error;
 }
 
+function generateDiagnosticPosition(issue: ILintHtmlIssue): Range {
+  if (issue.position) {
+    let { start, end } = issue.position;
+    return {
+      start: Position.create(start.line - 1, start.column - 1),
+      end: Position.create(end.line - 1, end.column - 1)
+    }
+  }
+
+  return {
+    // @ts-ignore
+    start: Position.create(issue.line - 1, issue.column),
+    // @ts-ignore
+    end: Position.create(issue.line - 1, issue.column + 1)
+  }
+}
+
 function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, lintHTML: any) {
 
   const diagnostics: Diagnostic[] = issues.map((issue: ILintHtmlIssue) => {
     return {
       severity: generateSeverity(issue),
-      range: {
-        start: Position.create(issue.line - 1, issue.column),
-        end: Position.create(issue.line - 1, issue.column + 1)
-      },
+      range: generateDiagnosticPosition(issue),
       code: issue.rule,
       source: "linthtml",
       message: issue.msg || lintHTML.messages.renderIssue(issue)
@@ -163,7 +177,6 @@ function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, 
 }
 
 async function lint(textDocument: TextDocument, config: any, lintHTML: any) {
-
   const filePath = Files.uriToFilePath(textDocument.uri);
   const text = textDocument.getText();
   try {
@@ -180,7 +193,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     const lintHTML = await getLintHTML(textDocument, { connection, packageManager: settings.packageManager});
 
     let config = await configForFile(textDocument, settings);
-
+    console.log(config)
+    console.log(settings)
     if (config !== null) {
       const error: Error = await checkConfig(config, lintHTML);
       if (error) {
