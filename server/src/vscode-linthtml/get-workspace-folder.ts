@@ -1,7 +1,9 @@
+// @ts-ignore
 import * as pathIsInside from "path-is-inside";
-import URI from "vscode-uri";
+import { URI } from "vscode-uri";
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
-async function getWorkspaceFolder(document, connection) {
+async function getWorkspaceFolder(document: TextDocument, connection: any) {
   const documentPath = URI.parse(document.uri).fsPath;
 
   if (documentPath) {

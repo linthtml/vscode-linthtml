@@ -4,19 +4,19 @@ import {
   Files,
   TextDocument
 } from "vscode-languageserver";
-import URI from "vscode-uri";
+import { URI } from "vscode-uri";
 import { getWorkspaceFolder } from "./get-workspace-folder";
 
 async function getLintHTML(textDocument: TextDocument, { connection, packageManager }: { connection: any, packageManager: string}) {
-  function trace(message, verbose) {
+  function trace(message: string, verbose?: string) {
     connection.tracer.log(message, verbose);
   }
+  let cwd;
   try {
     const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace); // TODO: Use a setting or something to determine the package manager
     // const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace);
     const uri = URI.parse(textDocument.uri);
 
-    let cwd;
 
     if (uri.scheme === "file") {
       const file = uri.fsPath;
@@ -28,7 +28,6 @@ async function getLintHTML(textDocument: TextDocument, { connection, packageMana
 
       cwd = workspaceFolder;
     }
-
     const lintHTMLPath = await Files.resolve(
       "@linthtml/linthtml",
       resolvedGlobalPackageManagerPath,
@@ -42,16 +41,16 @@ async function getLintHTML(textDocument: TextDocument, { connection, packageMana
   }
 }
 
-const globalPaths = {
+const globalPaths: any = {
   yarn: {
     cache: undefined,
-    get(trace) {
+    get(trace: any) {
       return Files.resolveGlobalYarnPath(trace);
     },
   },
   npm: {
     cache: undefined,
-    get(trace) {
+    get(trace: any) {
       return Files.resolveGlobalNodePath(trace);
     },
   },
@@ -67,8 +66,8 @@ const globalPaths = {
   },
 };
 
-function globalPathGet(packageManager, trace) {
-  const pm = globalPaths[packageManager];
+function globalPathGet(packageManager: string, trace: any) {
+  const pm: any = globalPaths[packageManager];
 
   if (pm) {
     if (pm.cache === undefined) {

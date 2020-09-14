@@ -2,7 +2,7 @@
 interface IExtensionSettings {
   enabled: boolean;
   configFile: string|null;
-  packageManager: string|null;
+  packageManager: string;
 }
 
 enum Severity {

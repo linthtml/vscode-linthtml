@@ -12,12 +12,13 @@ import {
   InitializeParams,
   Position,
   ProposedFeatures,
-  TextDocument,
-  TextDocuments
+  TextDocuments,
+  TextDocumentSyncKind
 } from "vscode-languageserver";
 import { IExtensionSettings, ILintHtmlIssue } from "./types";
 import { getLintHTML } from "./vscode-linthtml/get-linthtml";
 import { localeConfig, readLocalConfig } from "./vscode-linthtml/local-config";
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 // Create a connection for the server. The connection uses Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -25,10 +26,11 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager. The text document manager
 // supports full document sync only
-const documents: TextDocuments = new TextDocuments();
+const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 let hasConfigurationCapability: boolean = false;
 let hasWorkspaceFolderCapability: boolean = false;
+// @ts-ignore
 let hasDiagnosticRelatedInformationCapability: boolean = false;
 
 connection.onInitialize((params: InitializeParams) => {
@@ -45,7 +47,7 @@ connection.onInitialize((params: InitializeParams) => {
 
   return {
     capabilities: {
-      textDocumentSync: documents.syncKind,
+      textDocumentSync: TextDocumentSyncKind.Full,
       // Tell the client that the server supports code completion
       completionProvider: {
         resolveProvider: true
@@ -122,13 +124,13 @@ function getDocumentSettings(resource: string): Thenable<IExtensionSettings> {
   return result;
 }
 
-async function configForFile(textDocument: TextDocument, settings): Promise<any> | never {
+async function configForFile(textDocument: TextDocument, settings: any): Promise<any> | never {
   if (settings.configFile !== null && settings.configFile.trim() !== "") {
     return readLocalConfig(settings.configFile);
   }
   return localeConfig(textDocument, connection);
 }
-async function checkConfig(config: any, lintHTML) {
+async function checkConfig(config: any, lintHTML: any) {
   try {
     await lintHTML("", config.config);
   } catch (error) {
@@ -142,7 +144,7 @@ function generateSeverity(issue: ILintHtmlIssue) {
     : DiagnosticSeverity.Error;
 }
 
-function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, lintHTML) {
+function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, lintHTML: any) {
 
   const diagnostics: Diagnostic[] = issues.map((issue: ILintHtmlIssue) => {
     return {
@@ -160,7 +162,7 @@ function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, 
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-async function lint(textDocument: TextDocument, config: any, lintHTML) {
+async function lint(textDocument: TextDocument, config: any, lintHTML: any) {
 
   const filePath = Files.uriToFilePath(textDocument.uri);
   const text = textDocument.getText();

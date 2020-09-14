@@ -1,4 +1,4 @@
-import * as cosmiconfig from "cosmiconfig";
+import { cosmiconfigSync as cosmiconfig } from "cosmiconfig";
 import * as fs from "fs";
 import { Files, TextDocument } from "vscode-languageserver";
 import { getWorkspaceFolder } from "./get-workspace-folder";
@@ -18,12 +18,12 @@ function cannotReadConfig(filePath: string): Error {
   return error;
 }
 
-async function localeConfig(textDocument: TextDocument, connection) {
+async function localeConfig(textDocument: TextDocument, connection: any) {
   const filePath = Files.uriToFilePath(textDocument.uri);
-  const workspace: string = await getWorkspaceFolder(textDocument, connection);
+  const workspace: string | undefined = await getWorkspaceFolder(textDocument, connection);
   const explorer = cosmiconfig("linthtml", { stopDir: workspace, packageProp: "linthtmlConfig"});
   try {
-    return explorer.searchSync(filePath);
+    return explorer.search(filePath);
   } catch (error) {
     return null;
   }
@@ -32,7 +32,7 @@ async function localeConfig(textDocument: TextDocument, connection) {
 function readLocalConfig(configFile: string): any | never {
   try {
     const explorer = cosmiconfig("linthtml", { packageProp: "linthtmlConfig"});
-    return explorer.loadSync(configFile);
+    return explorer.load(configFile);
   } catch (error) {
     throw cannotReadConfig(configFile);
   }
