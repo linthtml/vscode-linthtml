@@ -1,7 +1,7 @@
 // The example settings
 interface IExtensionSettings {
   enabled: boolean;
-  configFile: string|null;
+  configFile?: string;
   packageManager: string;
 }
 
@@ -33,4 +33,8 @@ interface ILintHtmlIssue {
   severity?: Severity;
 }
 
-export { IExtensionSettings, ILintHtmlIssue };
+interface Linter {
+  lint(html :string) :ILintHtmlIssue[];
+}
+
+export { IExtensionSettings, ILintHtmlIssue, Linter };
