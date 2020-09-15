@@ -14,7 +14,6 @@ import {
   TextDocuments,
   TextDocumentSyncKind
 } from "vscode-languageserver";
-import * as path from "path";
 import { IExtensionSettings, ILintHtmlIssue, Linter } from "./types";
 import { getLintHTML } from "./vscode-linthtml/get-linthtml";
 import { localeConfig, readLocalConfig } from "./vscode-linthtml/local-config";
@@ -191,15 +190,16 @@ async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
 }
 
 async function createLinter(textDocument: TextDocument, { configFile }: IExtensionSettings, lintHTML: any): Promise<Linter | undefined> {
-  if (lintHTML.create_linters_for_files) {
-    if (configFile && configFile.trim() !== "") {
-      return lintHTML.from_config_path(configFile)
-    }
-    // need to send file path relative to vscode folder and not workspace folder
-    let file_path = path.relative(process.cwd(), URI.parse(textDocument.uri).fsPath);
-    const { linter } = lintHTML.create_linters_for_files([file_path], null, process.cwd())[0];
-    return linter;
-  }
+  // VSCODE extension already create a linter per file correctly
+  // globby/node-ignorer don't accept absolute and relative paths with ../..
+  // if (lintHTML.create_linters_for_files) {
+  //   if (configFile && configFile.trim() !== "") {
+  //     return lintHTML.from_config_path(configFile)
+  //   }
+  //   // need to send file path relative to vscode folder and not workspace folder
+  //   const { linter } = lintHTML.create_linters_for_files([URI.parse(textDocument.uri).fsPath], null, process.cwd())[0];
+  //   return linter;
+  // }
 
   let config = await configForFile(textDocument, configFile);
   if (config !== null) {
