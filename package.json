@@ -66,7 +66,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run webpack",
-    "webpack": "npm run clean && webpack --mode production --config ./client/webpack.config.js && webpack --mode production --config ./server/webpack.config.js",
+    "webpack": "npm run clean && webpack --mode production --config ./client/webpack.config.js && npm run compile:server",
+    "webpack_old": "npm run clean && webpack --mode production --config ./client/webpack.config.js && webpack --mode production --config ./server/webpack.config.js",
     "webpack:dev": "npm run clean && webpack --mode none --config ./client/webpack.config.js && webpack --mode none --config ./server/webpack.config.js",
     "compile": "tsc -b",
     "compile:client": "tsc -b ./client/tsconfig.json",
