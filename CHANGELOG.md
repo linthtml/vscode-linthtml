@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.5.0]
+
+- [FEAT] Add support for LintHTML0.5.0
+- [INTERNAL] Use webpack to bundle extension
+
 ## [0.4.0]
 
 - [FEAT] Display warning issues as warning
