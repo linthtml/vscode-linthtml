@@ -31,7 +31,7 @@ async function localeConfig(textDocument: TextDocument, connection: any) {
 
 function readLocalConfig(configFile: string): any | never {
   try {
-    const explorer = cosmiconfig("linthtml", { packageProp: "linthtmlConfig"});
+    const explorer = cosmiconfig("linthtml", { packageProp: "linthtmlConfig" });
     return explorer.load(configFile);
   } catch (error) {
     throw cannotReadConfig(configFile);

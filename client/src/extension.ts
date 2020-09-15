@@ -55,10 +55,6 @@ export function activate(context: ExtensionContext): void {
     return;
   }
   client.registerProposedFeatures();
-
-  context.subscriptions.push(
-    client.start(),
-  );
 }
 
 export function deactivate(): Thenable<void> | undefined {

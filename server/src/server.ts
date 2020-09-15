@@ -8,17 +8,17 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   DidChangeConfigurationNotification,
-  Files,
   InitializeParams,
   Position,
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind
 } from "vscode-languageserver";
-import { IExtensionSettings, ILintHtmlIssue } from "./types";
+import { IExtensionSettings, ILintHtmlIssue, Linter } from "./types";
 import { getLintHTML } from "./vscode-linthtml/get-linthtml";
 import { localeConfig, readLocalConfig } from "./vscode-linthtml/local-config";
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument, Range } from 'vscode-languageserver-textdocument';
+import { URI } from "vscode-uri";
 
 // Create a connection for the server. The connection uses Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -47,10 +47,13 @@ connection.onInitialize((params: InitializeParams) => {
 
   return {
     capabilities: {
-      textDocumentSync: TextDocumentSyncKind.Full,
+      textDocumentSync: {
+        openClose: true,
+        change: TextDocumentSyncKind.Full,
+      },
       // Tell the client that the server supports code completion
       completionProvider: {
-        resolveProvider: true
+        // resolveProvider: true
       }
     }
   };
@@ -76,7 +79,7 @@ connection.onInitialized(() => {
 // but could happen with other clients.
 const defaultSettings: IExtensionSettings = {
   enabled: true,
-  configFile: null,
+  configFile: undefined,
   packageManager: "npm"
 };
 
@@ -99,8 +102,8 @@ connection.onDidChangeConfiguration(({ settings }) => {
 });
 
 // Only keep settings for open documents
-documents.onDidClose((e) => {
-  documentSettings.delete(e.document.uri);
+documents.onDidClose((/*e*/) => {
+  // documentSettings.delete(e.document.uri);
 });
 
 // The content of a text document has changed. This event is emitted
@@ -124,9 +127,9 @@ function getDocumentSettings(resource: string): Thenable<IExtensionSettings> {
   return result;
 }
 
-async function configForFile(textDocument: TextDocument, settings: any): Promise<any> | never {
-  if (settings.configFile !== null && settings.configFile.trim() !== "") {
-    return readLocalConfig(settings.configFile);
+async function configForFile(textDocument: TextDocument, configFile?: string): Promise<any> | never {
+  if (configFile && configFile.trim() !== "") {
+    return readLocalConfig(configFile);
   }
   return localeConfig(textDocument, connection);
 }
@@ -144,15 +147,29 @@ function generateSeverity(issue: ILintHtmlIssue) {
     : DiagnosticSeverity.Error;
 }
 
+function generateDiagnosticPosition(issue: ILintHtmlIssue): Range {
+  if (issue.position) {
+    let { start, end } = issue.position;
+    return {
+      start: Position.create(start.line - 1, start.column - 1),
+      end: Position.create(end.line - 1, end.column - 1)
+    }
+  }
+
+  return {
+    // @ts-ignore
+    start: Position.create(issue.line - 1, issue.column),
+    // @ts-ignore
+    end: Position.create(issue.line - 1, issue.column + 1)
+  }
+}
+
 function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, lintHTML: any) {
 
   const diagnostics: Diagnostic[] = issues.map((issue: ILintHtmlIssue) => {
     return {
       severity: generateSeverity(issue),
-      range: {
-        start: Position.create(issue.line - 1, issue.column),
-        end: Position.create(issue.line - 1, issue.column + 1)
-      },
+      range: generateDiagnosticPosition(issue),
       code: issue.rule,
       source: "linthtml",
       message: issue.msg || lintHTML.messages.renderIssue(issue)
@@ -162,16 +179,38 @@ function printDiagnostics(issues: ILintHtmlIssue[], textDocument: TextDocument, 
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-async function lint(textDocument: TextDocument, config: any, lintHTML: any) {
-
-  const filePath = Files.uriToFilePath(textDocument.uri);
+async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
   const text = textDocument.getText();
   try {
-    const issues: ILintHtmlIssue[] = await lintHTML(text, config);
+    const issues: ILintHtmlIssue[] = await linter.lint(text);
     printDiagnostics(issues, textDocument, lintHTML);
   } catch (error) {
-    return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${filePath}`);
+    return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${URI.parse(textDocument.uri).fsPath}`);
   }
+}
+
+async function createLinter(textDocument: TextDocument, { configFile }: IExtensionSettings, lintHTML: any): Promise<Linter | undefined> {
+  // VSCODE extension already create a linter per file correctly
+  // globby/node-ignorer don't accept absolute and relative paths with ../..
+  // if (lintHTML.create_linters_for_files) {
+  //   if (configFile && configFile.trim() !== "") {
+  //     return lintHTML.from_config_path(configFile)
+  //   }
+  //   // need to send file path relative to vscode folder and not workspace folder
+  //   const { linter } = lintHTML.create_linters_for_files([URI.parse(textDocument.uri).fsPath], null, process.cwd())[0];
+  //   return linter;
+  // }
+
+  let config = await configForFile(textDocument, configFile);
+  if (config !== null) {
+    const error: Error = await checkConfig(config, lintHTML);
+    if (error) {
+      throw new Error(`${error.message}. Check your config file ${config.filepath}.`);
+    }
+    config = config.config;
+  }
+
+  return lintHTML.fromConfig(config);
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
@@ -179,17 +218,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   try {
     const lintHTML = await getLintHTML(textDocument, { connection, packageManager: settings.packageManager});
 
-    let config = await configForFile(textDocument, settings);
+    let linter = await createLinter(textDocument, settings, lintHTML);
 
-    if (config !== null) {
-      const error: Error = await checkConfig(config, lintHTML);
-      if (error) {
-        throw new Error(`${error.message}. Check your config file ${config.filepath}.`);
-      }
-      config = config.config;
+    if (linter) {
+      return lint(textDocument, linter, lintHTML);
     }
-
-    return lint(textDocument, config, lintHTML);
+    return;
   } catch (error) {
     return connection.window.showErrorMessage(`linthtml: ${error.message}`);
   }

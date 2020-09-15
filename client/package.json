@@ -1,21 +1,21 @@
 {
-  "name": "linthtml-client",
-  "description": "VSCode part of a language server",
-  "license": "Apache License 2.0",
-  "version": "0.3.0",
-  "author": "Benjamin JEGARD",
-  "publisher": "kamikillerto",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/linthtml/vscode-linthtml"
-  },
-	"engines": {
-		"vscode": "^1.38.0"
-	},
-	"devDependencies": {
-		"@types/vscode": "1.38.0"
-	},
-	"dependencies": {
-		"vscode-languageclient": "^6.1.3"
-	}
+ "name": "linthtml-client",
+ "description": "VSCode part of a language server",
+ "license": "Apache License 2.0",
+ "version": "0.3.0",
+ "author": "Benjamin JEGARD",
+ "publisher": "kamikillerto",
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/linthtml/vscode-linthtml"
+ },
+ "engines": {
+  "vscode": "^1.38.0"
+ },
+ "devDependencies": {
+  "@types/vscode": "1.38.0"
+ },
+ "dependencies": {
+  "vscode-languageclient": "^6.1.3"
+ }
 }
