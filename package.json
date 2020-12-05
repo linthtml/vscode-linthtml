@@ -11,9 +11,8 @@
     "url": "https://github.com/linthtml/vscode-linthtml"
   },
   "bugs": {
-    "url": "https://github.com/kamikillerto/linthtml-linthtml/issues"
+    "url": "https://github.com/linthtml/vscode-linthtml/issues"
   },
-  "homepage": "https://github.com/kamikillerto/linthtml-linthtml/blob/master/README.MD",
   "galleryBanner": {
     "theme": "light"
   },
