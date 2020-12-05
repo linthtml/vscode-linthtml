@@ -1,6 +1,6 @@
 {
   "name": "vscode-linthtml",
-  "displayName": "LintHTML",
+  "displayName": "Lint HTML",
   "description": "Bring LintHTML errors into vscode",
   "author": "Benjamin JEGARD",
   "publisher": "kamikillerto",
