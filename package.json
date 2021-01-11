@@ -76,7 +76,9 @@
     "lint:client": "eslint --config ./client/.eslintrc.json ./client/src/*.ts",
     "lint:server": "eslint --config ./server/.eslintrc.json ./server/src/*.ts",
     "clean": "rimraf client/out && rimraf server/out",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "pretest": "npm run compile",
+    "test": "node ./client/out/test/runTest.js"
   },
   "devDependencies": {
     "@types/node": "^14.14.20",
