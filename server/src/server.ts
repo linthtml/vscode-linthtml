@@ -10,9 +10,11 @@ import {
   DidChangeConfigurationNotification,
   InitializeParams,
   Position,
+  ProgressType,
   ProposedFeatures,
   TextDocuments,
-  TextDocumentSyncKind
+  TextDocumentSyncKind,
+  Files
 } from "vscode-languageserver";
 import { IExtensionSettings, ILintHtmlIssue, Linter } from "./types";
 import { getLintHTML } from "./vscode-linthtml/get-linthtml";
@@ -32,6 +34,15 @@ let hasConfigurationCapability: boolean = false;
 let hasWorkspaceFolderCapability: boolean = false;
 // @ts-ignore
 let hasDiagnosticRelatedInformationCapability: boolean = false;
+
+class ServerState {
+  document_checked: string | undefined;
+  is_document_checked: boolean = false;
+}
+
+function send_state(state: ServerState) {
+  connection.sendProgress(new ProgressType<ServerState>(), 'server-state', state); // Works but cannot be used to check file has been checked
+}
 
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities;
@@ -72,7 +83,9 @@ connection.onInitialized(() => {
       connection.console.log("Workspace folder change event received.");
     });
   }
+  send_state(new ServerState());
 });
+
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
@@ -183,6 +196,12 @@ async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
   const text = textDocument.getText();
   try {
     const issues: ILintHtmlIssue[] = await linter.lint(text);
+    
+    let state = new ServerState();
+    state.document_checked = Files.uriToFilePath(textDocument.uri);
+    state.is_document_checked = true;
+    send_state(state);
+
     printDiagnostics(issues, textDocument, lintHTML);
   } catch (error) {
     return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${URI.parse(textDocument.uri).fsPath}`);
@@ -208,6 +227,11 @@ async function createLinter(textDocument: TextDocument, { configFile }: IExtensi
       throw new Error(`${error.message}. Check your config file ${config.filepath}.`);
     }
     config = config.config;
+  }
+
+  if (!lintHTML.fromConfig) {
+    connection.window.showErrorMessage("LintHTML extension does not support lintHTML's versions below the version 0.3.0");
+    return;
   }
 
   return lintHTML.fromConfig(config);
@@ -275,6 +299,9 @@ connection.onCompletion(
 // );
 
 connection.onDidOpenTextDocument((params) => {
+  let state = new ServerState();
+  state.document_checked = Files.uriToFilePath(params.textDocument.uri);
+  send_state(state);
   // A text document got opened in VSCode.
   // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
   // params.text the initial full content of the document.
@@ -284,6 +311,9 @@ connection.onDidChangeTextDocument((params) => {
   // The content of a text document did change in VSCode.
   // params.uri uniquely identifies the document.
   // params.contentChanges describe the content changes to the document.
+  let state = new ServerState();
+  state.document_checked = params.textDocument.uri;
+  send_state(state);
   connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
 });
 connection.onDidCloseTextDocument((params) => {

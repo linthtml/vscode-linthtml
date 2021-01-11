@@ -5,12 +5,24 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
+import { ServerState } from '../../extension';
 
 export let doc: vscode.TextDocument;
 export let editor: vscode.TextEditor;
 export let documentEol: string;
 export let platformEol: string;
 
+
+function is_document_linted(extension: vscode.Extension<ServerState>, docUri: string): Promise<void> {
+  return new Promise((resolve, _) => {
+      let id = setInterval(() => {
+        if (extension.exports.document_checked === docUri && extension.exports.is_document_checked) { // does not mean file has been checked
+          clearInterval(id);
+          return resolve();
+        }
+      }, 200);
+  });
+}
 /**
  * Activates the extension
  */
@@ -22,16 +34,12 @@ export async function activate(docUri: vscode.Uri) {
     doc = await vscode.workspace.openTextDocument(docUri);
     editor = await vscode.window.showTextDocument(doc);
     // TODO: Find a way to get server readiness (maybe extension client side can expose server status)
-    await sleep(2000); // Wait for server activation
+    await is_document_linted(ext, docUri.fsPath); // Wait for server activation
   } catch (e) {
     /* tslint:disable no-console */
     console.error(e);
     /* tslint:enable no-console */
   }
-}
-
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export const getDocPath = (p: string) => {
