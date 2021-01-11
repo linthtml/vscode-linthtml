@@ -10,15 +10,18 @@ import { activate, getDocUri } from "./helper";
 
 describe("Should get diagnostics", () => {
 
-  // it('Should use linthtml default rules', async () => {
-  //   const docUri = getDocUri('diagnostics.html');
-  //   await testDiagnostics(docUri, [
-  //     { code: 'indent-style', range: toRange(3, 1, 3, 2), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
-  //     { code: 'indent-style', range: toRange(8, 1, 8, 2), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
-  //     { code: 'indent-style', range: toRange(9, 1, 9, 2), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
-  //     { code: 'indent-style', range: toRange(11, 1, 11, 2), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' }
-  //   ]);
-  // });
+  it('Should use linthtml default presets when no config file is found', async () => {
+    const docUri = getDocUri('diagnostics.html');
+    await testDiagnostics(docUri, [
+      { code: 'indent-style', range: toRange(2, 2, 7, 9), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(3, 4, 3, 26), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(4, 4, 4, 74), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(5, 4, 5, 57), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(6, 4, 6, 27), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(8, 2, 10, 9), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-style', range: toRange(9, 4, 9, 230), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' }
+    ]);
+  });
 
   it("Should use config htmlint rules using local .linthtmlrc file (ok file)", async () => {
     const docUri = getDocUri("with-config-file/diagnostics_ok.html");
@@ -29,7 +32,7 @@ describe("Should get diagnostics", () => {
     const docUri = getDocUri("with-config-file/diagnostics_ko.html");
     await testDiagnostics(docUri, [
       { code: 'indent-style', range: toRange(9, 6, 9, 232), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
-    ]); // there're no lint issues in the document
+    ]);
   });
 });
 
@@ -43,7 +46,6 @@ async function testDiagnostics(docUri: vscode.Uri, expectedDiagnostics: vscode.D
   await activate(docUri);
 
   const actualDiagnostics = vscode.languages.getDiagnostics(docUri);
-
   assert.equal(actualDiagnostics.length, expectedDiagnostics.length);
 
   expectedDiagnostics.forEach((expectedDiagnostic, i) => {
