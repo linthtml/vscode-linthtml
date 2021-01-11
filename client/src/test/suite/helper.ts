@@ -22,7 +22,7 @@ export async function activate(docUri: vscode.Uri) {
     doc = await vscode.workspace.openTextDocument(docUri);
     editor = await vscode.window.showTextDocument(doc);
     // TODO: Find a way to get server readiness (maybe extension client side can expose server status)
-    await sleep(1000); // Wait for server activation
+    await sleep(2000); // Wait for server activation
   } catch (e) {
     /* tslint:disable no-console */
     console.error(e);
