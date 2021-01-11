@@ -12,7 +12,7 @@ export let documentEol: string;
 export let platformEol: string;
 
 /**
- * Activates the vscode.lsp-sample extension
+ * Activates the extension
  */
 export async function activate(docUri: vscode.Uri) {
   // The extensionId is `publisher.name` from package.json
@@ -21,7 +21,8 @@ export async function activate(docUri: vscode.Uri) {
   try {
     doc = await vscode.workspace.openTextDocument(docUri);
     editor = await vscode.window.showTextDocument(doc);
-    await sleep(2000); // Wait for server activation
+    // TODO: Find a way to get server readiness (maybe extension client side can expose server status)
+    await sleep(1000); // Wait for server activation
   } catch (e) {
     /* tslint:disable no-console */
     console.error(e);
@@ -34,7 +35,7 @@ async function sleep(ms: number) {
 }
 
 export const getDocPath = (p: string) => {
-  return path.resolve(__dirname, "../../testFixture", p);
+  return path.resolve(__dirname, "..", "..", "..",  "testFixture", p);
 };
 export const getDocUri = (p: string) => {
   return vscode.Uri.file(getDocPath(p));
