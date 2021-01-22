@@ -6,10 +6,16 @@
 
 import * as path from 'path';
 import { ExtensionContext, window as Window, workspace } from 'vscode';
-import { LanguageClient, LanguageClientOptions, RevealOutputChannelOn, ServerOptions, SettingMonitor, TransportKind } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, ProgressType, RevealOutputChannelOn, ServerOptions, SettingMonitor, TransportKind } from 'vscode-languageclient';
 
 let client: LanguageClient;
-export function activate(context: ExtensionContext): void {
+
+export class ServerState {
+  document_checked: string | undefined;
+  is_document_checked: boolean = false;
+}
+
+export function activate(context: ExtensionContext) {
   const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
   let serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc, options: { cwd: process.cwd() } },
@@ -54,7 +60,17 @@ export function activate(context: ExtensionContext): void {
     Window.showErrorMessage(`The extension couldn't be started. See the output channel for details.`);
     return;
   }
+  let state = new ServerState();
   client.registerProposedFeatures();
+  client.onReady()
+  .then(() => {
+    client.onProgress(new ProgressType<ServerState>(), 'server-state', (value) => { // Does not means file has been tested
+      
+      state.document_checked = value.document_checked;
+      state.is_document_checked = value.is_document_checked;
+    });
+  })
+  return state;
 }
 
 export function deactivate(): Thenable<void> | undefined {
