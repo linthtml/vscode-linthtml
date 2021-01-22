@@ -2,7 +2,7 @@
  "name": "linthtml-client",
  "description": "VSCode part of a language server",
  "license": "Apache License 2.0",
- "version": "0.5.0",
+ "version": "0.6.0",
  "author": "Benjamin JEGARD",
  "publisher": "kamikillerto",
  "repository": {
