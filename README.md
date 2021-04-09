@@ -1,10 +1,10 @@
-# vscode-linthtml
+# VS Code LintHTML extension
 
 [![Build Status](https://travis-ci.org/KamiKillertO/vscode-linthtml.svg?branch=master)](https://travis-ci.org/KamiKillertO/vscode-linthtml)
 
-A [Visual Studio Code extension](https://code.visualstudio.com/) to lint [HTML](https://www.w3.org/WebPlatform/WG/PubStatus#HTML_specifications) with [linthtml](https://github.com/linthtml/linthtml).
+A [Visual Studio Code extension](https://code.visualstudio.com/) to lint [HTML](https://html.spec.whatwg.org/multipage/) with [LintHTML](https://github.com/linthtml/linthtml).
 
-![screenshot](screenshot.png)
+![screenshot](https://github.com/linthtml/vscode-linthtml/blob/main/screenshot.png)
 _If you find some error message not explicit enough, please create an issue [here](https://github.com/KamiKillertO/vscode-linthtml/issues)_
 
 ## Installation
@@ -24,7 +24,7 @@ If you have a valid hmllint configuration file `.linthtmlrc` (all options availa
 
 ## Extension settings
 
-#### linthtml.enable
+### linthtml.enable
 
 Type: `boolean`  
 Default: `true`
@@ -40,4 +40,4 @@ Specified the path to a config file for LintHTML that will be used to lint all H
 
 ## License
 
-[APACHE 2.0 License](./LICENSE.txt)
+[APACHE 2.0 License](./LICENSE)
