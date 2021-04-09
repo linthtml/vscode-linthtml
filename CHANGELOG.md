@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.6.1]
+
+- [FIX] Convert windows paths into linux like paths
+
 ## [0.6.0]
 
 - [FEAT] Improve support for linthtml 0.5+.
