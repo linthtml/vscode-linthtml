@@ -215,8 +215,15 @@ async function createLinter(textDocument: TextDocument, { configFile }: IExtensi
     if (configFile && configFile.trim() !== "") {
       return lintHTML.from_config_path(configFile)
     }
+
     // need to send file path relative to vscode folder and not workspace folder
-    const { linter } = lintHTML.create_linters_for_files([URI.parse(textDocument.uri).fsPath], null, process.cwd())[0];
+    let path = URI.parse(textDocument.uri).fsPath;
+    
+    if (/^[a-z]:\\\\/i.test(path)) { // convert "\" in "/" in windows path
+      path = path.replace(/\\/g, "/");
+    }
+    
+    const { linter } = lintHTML.create_linters_for_files([path], null)[0];
     return linter;
   }
 
