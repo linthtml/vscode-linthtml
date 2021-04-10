@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [0.6.1]
+## [0.6.2]
 
 - [FIX] Convert windows paths into linux like paths
 
