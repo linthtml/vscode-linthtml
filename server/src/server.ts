@@ -218,8 +218,7 @@ async function createLinter(textDocument: TextDocument, { configFile }: IExtensi
 
     // need to send file path relative to vscode folder and not workspace folder
     let path = URI.parse(textDocument.uri).fsPath;
-    
-    if (/^[a-z]:\\\\/i.test(path)) { // convert "\" in "/" in windows path
+    if (/^[a-z]:\\/i.test(path)) { // convert "\" in "/" in windows path
       path = path.replace(/\\/g, "/");
     }
     
