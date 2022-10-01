@@ -31,7 +31,7 @@ describe("Should get diagnostics", () => {
   it("Should use config htmlint rules using local .linthtmlrc file (ko file", async () => {
     const docUri = getDocUri("with-config-file/diagnostics_ko.html");
     await testDiagnostics(docUri, [
-      { code: 'indent-style', range: toRange(9, 6, 9, 232), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
+      { code: 'indent-width', range: toRange(9, 6, 9, 232), severity: vscode.DiagnosticSeverity.Error, source: 'linthtml', message: '' },
     ]);
   });
 });
