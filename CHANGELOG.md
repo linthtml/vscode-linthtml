@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.6.3]
+
+- [FIX] Correctly load LintHTML v0.9.x
+
 ## [0.6.2]
 
 - [FIX] Convert windows paths into linux like paths
