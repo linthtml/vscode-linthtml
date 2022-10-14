@@ -35,7 +35,8 @@ async function getLintHTML(textDocument: TextDocument, { connection, packageMana
       trace,
     );
 
-    return await import(lintHTMLPath);
+    const LintHTML = await import(lintHTMLPath);
+    return LintHTML.default ?? LintHTML;
   } catch (error) {
     throw new Error("Cannot find global or local @linthtml/linthtml package");
   }

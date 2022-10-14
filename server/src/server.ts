@@ -149,7 +149,7 @@ async function configForFile(textDocument: TextDocument, configFile?: string): P
 async function checkConfig(config: any, lintHTML: any) {
   try {
     await lintHTML("", config.config);
-  } catch (error) {
+  } catch (error: any) {
     return error;
   }
 }
@@ -203,7 +203,7 @@ async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
     send_state(state);
 
     printDiagnostics(issues, textDocument, lintHTML);
-  } catch (error) {
+  } catch (error: any) {
     return connection.window.showErrorMessage(`linthtml: ${error.message} In file ${URI.parse(textDocument.uri).fsPath}`);
   }
 }
@@ -254,7 +254,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       return lint(textDocument, linter, lintHTML);
     }
     return;
-  } catch (error) {
+  } catch (error: any) {
     return connection.window.showErrorMessage(`linthtml: ${error.message}`);
   }
 }
