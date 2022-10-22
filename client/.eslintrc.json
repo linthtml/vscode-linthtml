@@ -1,5 +1,4 @@
 {
-	"extends": "../.eslintrc.base.json",
-	"rules": {
-	}
+  "extends": "../.eslintrc.base.js",
+  "rules": {}
 }
