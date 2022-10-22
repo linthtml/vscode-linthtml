@@ -1,26 +1,32 @@
 /* --------------------------------------------------------------------------------------------
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the MIT License. See License.txt in the project root for license information.
-* ------------------------------------------------------------------------------------------ */
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
 
 import * as path from "path";
 import * as vscode from "vscode";
-import { ServerState } from '../../extension';
+import { ServerState } from "../../extension";
 
 export let doc: vscode.TextDocument;
 export let editor: vscode.TextEditor;
 export let documentEol: string;
 export let platformEol: string;
 
-
-function is_document_linted(extension: vscode.Extension<ServerState>, docUri: string): Promise<void> {
+function is_document_linted(
+  extension: vscode.Extension<ServerState>,
+  docUri: string
+): Promise<void> {
   return new Promise((resolve, _) => {
-      let id = setInterval(() => {
-        if (extension.exports.document_checked === docUri && extension.exports.is_document_checked) { // does not mean file has been checked
-          clearInterval(id);
-          return resolve();
-        }
-      }, 200);
+    const id = setInterval(() => {
+      if (
+        extension.exports.document_checked === docUri &&
+        extension.exports.is_document_checked
+      ) {
+        // does not mean file has been checked
+        clearInterval(id);
+        return resolve();
+      }
+    }, 200);
   });
 }
 /**
@@ -35,6 +41,7 @@ export async function activate(docUri: vscode.Uri) {
     editor = await vscode.window.showTextDocument(doc);
     // TODO: Find a way to get server readiness (maybe extension client side can expose server status)
     await is_document_linted(ext, docUri.fsPath); // Wait for server activation
+    await new Promise((resolve) => setTimeout(resolve, 4000));
   } catch (e) {
     /* tslint:disable no-console */
     console.error(e);
@@ -43,7 +50,7 @@ export async function activate(docUri: vscode.Uri) {
 }
 
 export const getDocPath = (p: string) => {
-  return path.resolve(__dirname, "..", "..", "..",  "testFixture", p);
+  return path.resolve(__dirname, "..", "..", "..", "testFixture", p);
 };
 export const getDocUri = (p: string) => {
   return vscode.Uri.file(getDocPath(p));
