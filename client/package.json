@@ -20,7 +20,7 @@
   "@types/vscode": "1.49.0",
   "vscode-test": "^1.4.0",
   "chai": "^4.2.0",
-  "mocha": "^8.2.0",
+  "mocha": "^10.1.0",
   "glob": "^7.1.4"
  },
  "dependencies": {
