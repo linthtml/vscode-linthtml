@@ -1,22 +1,29 @@
 import { execSync } from "child_process";
 import * as path from "path";
-import {
-  Files,
-  TextDocument
-} from "vscode-languageserver";
+import { Files, TextDocument } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { getWorkspaceFolder } from "./get-workspace-folder";
 
-async function getLintHTML(textDocument: TextDocument, { connection, packageManager }: { connection: any, packageManager: string}) {
+const dynamicImport = new Function(
+  "specifier",
+  "return import(specifier).then(package => package.default ?? package)"
+);
+
+async function getLintHTML(
+  textDocument: TextDocument,
+  { connection, packageManager }: { connection: any; packageManager: string }
+) {
   function trace(message: string, verbose?: string) {
     connection.tracer.log(message, verbose);
   }
   let cwd;
   try {
-    const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace); // TODO: Use a setting or something to determine the package manager
-    // const resolvedGlobalPackageManagerPath = globalPathGet(packageManager, trace);
+    // TODO: Use a setting or something to determine the package manager
+    const resolvedGlobalPackageManagerPath = globalPathGet(
+      packageManager,
+      trace
+    );
     const uri = URI.parse(textDocument.uri);
-
 
     if (uri.scheme === "file") {
       const file = uri.fsPath;
@@ -24,7 +31,10 @@ async function getLintHTML(textDocument: TextDocument, { connection, packageMana
 
       cwd = directory;
     } else {
-      const workspaceFolder = await getWorkspaceFolder(textDocument, connection);
+      const workspaceFolder = await getWorkspaceFolder(
+        textDocument,
+        connection
+      );
 
       cwd = workspaceFolder;
     }
@@ -32,10 +42,10 @@ async function getLintHTML(textDocument: TextDocument, { connection, packageMana
       "@linthtml/linthtml",
       resolvedGlobalPackageManagerPath,
       cwd,
-      trace,
+      trace
     );
 
-    const LintHTML = await import(lintHTMLPath);
+    const LintHTML = await dynamicImport(lintHTMLPath);
     return LintHTML.default ?? LintHTML;
   } catch (error) {
     throw new Error("Cannot find global or local @linthtml/linthtml package");
@@ -58,9 +68,7 @@ const globalPaths: any = {
   pnpm: {
     cache: undefined,
     get() {
-      const pnpmPath = execSync("pnpm root -g")
-        .toString()
-        .trim();
+      const pnpmPath = execSync("pnpm root -g").toString().trim();
 
       return pnpmPath;
     },

@@ -231,7 +231,7 @@ async function createLinter(
   // globby/node-ignorer don't accept absolute and relative paths with ../..
   if (lintHTML.create_linters_for_files) {
     if (configFile && configFile.trim() !== "") {
-      return lintHTML.from_config_path(configFile);
+      return await lintHTML.from_config_path(configFile);
     }
 
     // need to send file path relative to vscode folder and not workspace folder
@@ -241,7 +241,7 @@ async function createLinter(
       path = path.replace(/\\/g, "/");
     }
 
-    const { linter } = lintHTML.create_linters_for_files([path], null)[0];
+    const [{ linter }] = await lintHTML.create_linters_for_files([path], null);
     return linter;
   }
 
