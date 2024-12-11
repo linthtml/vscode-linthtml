@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
-import { Files } from 'vscode-languageserver';
+import { Files } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 import { getWorkspaceFolder } from './get-workspace-folder';
 import type { Connection, TextDocument } from 'vscode-languageserver';

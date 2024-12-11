@@ -1,7 +1,7 @@
 import { cosmiconfigSync as cosmiconfig } from 'cosmiconfig';
 import * as fs from 'fs';
 import type { Connection, TextDocument } from 'vscode-languageserver';
-import { Files } from 'vscode-languageserver';
+import { Files } from 'vscode-languageserver/node';
 import { getWorkspaceFolder } from './get-workspace-folder';
 
 function cannotReadConfig(filePath: string): Error {

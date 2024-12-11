@@ -2,7 +2,7 @@ import type {
   CompletionItem,
   Diagnostic,
   InitializeParams,
-} from 'vscode-languageserver';
+} from 'vscode-languageserver/node';
 import {
   createConnection,
   DiagnosticSeverity,
@@ -13,7 +13,7 @@ import {
   TextDocuments,
   TextDocumentSyncKind,
   Files,
-} from 'vscode-languageserver';
+} from 'vscode-languageserver/node';
 import {
   Severity,
   type IExtensionSettings,
@@ -43,6 +43,7 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
+// @ts-expect-error TOFIX
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let hasDiagnosticRelatedInformationCapability = false;
 
@@ -52,7 +53,7 @@ class ServerState {
 }
 
 function send_state(state: ServerState) {
-  connection.sendProgress(
+  void connection.sendProgress(
     new ProgressType<ServerState>(),
     'server-state',
     state,
@@ -175,6 +176,7 @@ async function checkConfig(
 ) {
   try {
     await lintHTML('', config?.config);
+    return null;
   } catch (error) {
     return error;
   }
@@ -220,7 +222,7 @@ function printDiagnostics(
     };
   });
   // Send the computed diagnostics to VSCode.
-  connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+  void connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
 async function lint(
