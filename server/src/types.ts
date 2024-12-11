@@ -1,3 +1,8 @@
+type ValueOf<
+  ObjectType,
+  ValueType extends keyof ObjectType = keyof ObjectType,
+> = ObjectType[ValueType];
+
 // The example settings
 interface IExtensionSettings {
   enabled: boolean;
@@ -5,20 +10,20 @@ interface IExtensionSettings {
   packageManager: string;
 }
 
-enum Severity {
-  ERROR = "error",
-  WARNING = "warning"
-}
+export const Severity = {
+  ERROR: 'error',
+  WARNING: 'warning',
+};
 
 interface Range {
   start: {
     line: number;
     column: number;
-  }
+  };
   end: {
     line: number;
     column: number;
-  }
+  };
 }
 
 interface ILintHtmlIssue {
@@ -26,15 +31,15 @@ interface ILintHtmlIssue {
 
   column?: number;
   line?: number;
-  position?: Range
+  position?: Range;
 
   rule: string;
   msg: string;
-  severity?: Severity;
+  severity?: ValueOf<typeof Severity>;
 }
 
 interface Linter {
-  lint(html :string) :ILintHtmlIssue[];
+  lint(html: string): Promise<ILintHtmlIssue[]>;
 }
 
 export { IExtensionSettings, ILintHtmlIssue, Linter };

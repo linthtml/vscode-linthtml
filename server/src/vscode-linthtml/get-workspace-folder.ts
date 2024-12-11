@@ -1,9 +1,13 @@
 // @ts-ignore
-import * as pathIsInside from "path-is-inside";
-import { URI } from "vscode-uri";
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import * as pathIsInside from 'path-is-inside';
+import { URI } from 'vscode-uri';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
+import type { Connection } from 'vscode-languageserver';
 
-async function getWorkspaceFolder(document: TextDocument, connection: any) {
+async function getWorkspaceFolder(
+  document: TextDocument,
+  connection: Connection,
+) {
   const documentPath = URI.parse(document.uri).fsPath;
   const workspaceFolders = await connection.workspace.getWorkspaceFolders();
 
@@ -12,6 +16,7 @@ async function getWorkspaceFolder(document: TextDocument, connection: any) {
       for (const { uri } of workspaceFolders) {
         const workspacePath = URI.parse(uri).fsPath;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         if (pathIsInside(documentPath, workspacePath)) {
           return workspacePath;
         }

@@ -1,8 +1,8 @@
 // @ts-check
 
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -13,32 +13,31 @@ export default tseslint.config(
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
-        project: ["./tsconfig.eslint.json"],
+        project: ['./tsconfig.eslint.json'],
       },
     },
     rules: {
-      "@typescript-eslint/ban-ts-comment": "warn",
-      "@typescript-eslint/consistent-type-imports": "error",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
+      '@typescript-eslint/ban-ts-comment': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
         {
-          args: "all",
-          argsIgnorePattern: "^_",
-          caughtErrors: "all",
-          caughtErrorsIgnorePattern: "^_",
-          destructuredArrayIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
           ignoreRestSiblings: true,
         },
       ],
-      indent: ["error", 2, { SwitchCase: 1 }],
-      quotes: ["error", "single"],
-      semi: ["error", "always"],
-      "no-unsafe-finally": "error",
-      eqeqeq: ["error", "always"],
+      indent: ['error', 2, { SwitchCase: 1 }],
+      semi: ['error', 'always'],
+      'no-unsafe-finally': 'error',
+      eqeqeq: ['error', 'always'],
     },
   },
   {
-    ignores: ["out/"],
-  }
+    ignores: ['out/'],
+  },
 );

@@ -1,16 +1,19 @@
-"use strict";
+'use strict';
 
-import * as path from "path";
-import { ExtensionContext, window as Window, workspace } from "vscode";
+import * as path from 'path';
+import type { ExtensionContext } from 'vscode';
+import { window as Window, workspace } from 'vscode';
+import type {
+  LanguageClientOptions,
+  ServerOptions,
+} from 'vscode-languageclient';
 import {
   LanguageClient,
-  LanguageClientOptions,
   ProgressType,
   RevealOutputChannelOn,
-  ServerOptions,
   SettingMonitor,
   TransportKind,
-} from "vscode-languageclient";
+} from 'vscode-languageclient';
 
 let client: LanguageClient;
 
@@ -21,7 +24,7 @@ export class ServerState {
 
 export function activate(context: ExtensionContext) {
   const serverModule = context.asAbsolutePath(
-    path.join("server", "out", "server.js"),
+    path.join('server', 'out', 'server.js'),
   );
   const serverOptions: ServerOptions = {
     run: {
@@ -32,19 +35,19 @@ export function activate(context: ExtensionContext) {
     debug: {
       module: serverModule,
       transport: TransportKind.ipc,
-      options: { execArgv: ["--nolazy", "--inspect=6011"], cwd: process.cwd() },
+      options: { execArgv: ['--nolazy', '--inspect=6011'], cwd: process.cwd() },
     },
   };
 
   const clientOptions: LanguageClientOptions = {
     // Register the server for plain html documents
-    documentSelector: [{ scheme: "file", language: "html" }],
-    diagnosticCollectionName: "linthtml",
+    documentSelector: [{ scheme: 'file', language: 'html' }],
+    diagnosticCollectionName: 'linthtml',
     revealOutputChannelOn: RevealOutputChannelOn.Never,
     synchronize: {
-      configurationSection: "linthtml",
+      configurationSection: 'linthtml',
       // Notify the server about file changes to '.linthtmlrc.* files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher("**/.linthtmlrc*"),
+      fileEvents: workspace.createFileSystemWatcher('**/.linthtmlrc*'),
     },
     // progressOnInitialization: true,
     // middleware: {
@@ -62,36 +65,41 @@ export function activate(context: ExtensionContext) {
 
   try {
     client = new LanguageClient(
-      "linthtml",
-      "LintHTML Language Server",
+      'linthtml',
+      'LintHTML Language Server',
       serverOptions,
       clientOptions,
     );
     // Start the client. This will also launch the server
     // client.start();
     context.subscriptions.push(
-      new SettingMonitor(client, "linthtml.enable").start(),
+      new SettingMonitor(client, 'linthtml.enable').start(),
     );
   } catch (_err) {
     Window.showErrorMessage(
-      `The extension couldn't be started. See the output channel for details.`,
+      "The extension couldn't be started. See the output channel for details.",
     );
     return;
   }
   const state = new ServerState();
   client.registerProposedFeatures();
-  client.onReady().then(() => {
-    client.onProgress(
-      new ProgressType<ServerState>(),
-      "server-state",
-      (value) => {
-        // Does not means file has been tested
+  client
+    .onReady()
+    .then(() => {
+      client.onProgress(
+        new ProgressType<ServerState>(),
+        'server-state',
+        (value) => {
+          // Does not means file has been tested
 
-        state.document_checked = value.document_checked;
-        state.is_document_checked = value.is_document_checked;
-      },
-    );
-  });
+          state.document_checked = value.document_checked;
+          state.is_document_checked = value.is_document_checked;
+        },
+      );
+    })
+    .catch((err) => {
+      console.error(err);
+    });
   return state;
 }
 
