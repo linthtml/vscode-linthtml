@@ -1,82 +1,82 @@
-import { describe, it } from "mocha";
-import { assert } from "chai";
+import { describe, it } from 'mocha';
+import { assert } from 'chai';
 
-import * as vscode from "vscode";
-import { activate, getDocUri } from "./helper";
+import * as vscode from 'vscode';
+import { activate, getDocUri } from './helper';
 
-describe("Should get diagnostics", () => {
-  it("Should use linthtml default presets when no config file is found", async function () {
+describe('Should get diagnostics', () => {
+  it('Should use linthtml default presets when no config file is found', async function () {
     this.timeout(10000);
-    const docUri = getDocUri("diagnostics.html");
+    const docUri = getDocUri('diagnostics.html');
     await testDiagnostics(docUri, [
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(2, 2, 7, 9),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(3, 4, 3, 26),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(4, 4, 4, 74),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(5, 4, 5, 57),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(6, 4, 6, 27),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(8, 2, 10, 9),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
       {
-        code: "indent-style",
+        code: 'indent-style',
         range: toRange(9, 4, 9, 230),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
     ]);
   });
 
-  it("Should use config htmlint rules using local .linthtmlrc file (ok file)", async function () {
+  it('Should use config htmlint rules using local .linthtmlrc file (ok file)', async function () {
     this.timeout(10000);
-    const docUri = getDocUri("with-config-file/diagnostics_ok.html");
+    const docUri = getDocUri('with-config-file/diagnostics_ok.html');
     await testDiagnostics(docUri, []); // there're no lint issues in the document
   });
 
-  it("Should use config htmlint rules using local .linthtmlrc file (ko file)", async function () {
+  it('Should use config htmlint rules using local .linthtmlrc file (ko file)', async function () {
     this.timeout(10000);
-    const docUri = getDocUri("with-config-file/diagnostics_ko.html");
+    const docUri = getDocUri('with-config-file/diagnostics_ko.html');
     await testDiagnostics(docUri, [
       {
-        code: "indent-width",
+        code: 'indent-width',
         range: toRange(9, 6, 9, 232),
         severity: vscode.DiagnosticSeverity.Error,
-        source: "linthtml",
-        message: "",
+        source: 'linthtml',
+        message: '',
       },
     ]);
   });
@@ -90,7 +90,7 @@ function toRange(sLine: number, sChar: number, eLine: number, eChar: number) {
 
 async function testDiagnostics(
   docUri: vscode.Uri,
-  expectedDiagnostics: vscode.Diagnostic[]
+  expectedDiagnostics: vscode.Diagnostic[],
 ) {
   await activate(docUri);
 

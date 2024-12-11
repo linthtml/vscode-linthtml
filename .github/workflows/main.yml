@@ -14,9 +14,9 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [18.x, 20.x, 22.x]
         os: [macos-latest, ubuntu-latest]
-        linthtml: [0.7.x, 0.8.x, latest]
+        linthtml: [0.7.x, 0.8.x, 0.9.x, latest]
 
     steps:
       - uses: actions/checkout@v2

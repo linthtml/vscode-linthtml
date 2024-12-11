@@ -1,22 +1,37 @@
-import {
+import type {
   CompletionItem,
-  createConnection,
   Diagnostic,
+  InitializeParams,
+} from 'vscode-languageserver/node';
+import {
+  createConnection,
   DiagnosticSeverity,
   DidChangeConfigurationNotification,
-  InitializeParams,
   Position,
   ProgressType,
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind,
   Files,
-} from "vscode-languageserver";
-import { IExtensionSettings, ILintHtmlIssue, Linter } from "./types";
-import { getLintHTML } from "./vscode-linthtml/get-linthtml";
-import { localeConfig, readLocalConfig } from "./vscode-linthtml/local-config";
-import { TextDocument, Range } from "vscode-languageserver-textdocument";
-import { URI } from "vscode-uri";
+} from 'vscode-languageserver/node';
+import {
+  Severity,
+  type IExtensionSettings,
+  type ILintHtmlIssue,
+  type Linter,
+} from './types';
+import type { LintHTML_LIKE } from './vscode-linthtml/get-linthtml';
+import { getLintHTML } from './vscode-linthtml/get-linthtml';
+import { localeConfig, readLocalConfig } from './vscode-linthtml/local-config';
+import type { Range } from 'vscode-languageserver-textdocument';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { URI } from 'vscode-uri';
+import type { CosmiconfigResult } from 'cosmiconfig';
+
+type LEGACY_LINTHTML = (
+  content: string,
+  config: unknown,
+) => Promise<ILintHtmlIssue>;
 
 // Create a connection for the server. The connection uses Node"s IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -28,8 +43,8 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error TOFIX
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let hasDiagnosticRelatedInformationCapability = false;
 
 class ServerState {
@@ -38,10 +53,10 @@ class ServerState {
 }
 
 function send_state(state: ServerState) {
-  connection.sendProgress(
+  void connection.sendProgress(
     new ProgressType<ServerState>(),
-    "server-state",
-    state
+    'server-state',
+    state,
   ); // Works but cannot be used to check file has been checked
 }
 
@@ -79,14 +94,15 @@ connection.onInitialize((params: InitializeParams) => {
 connection.onInitialized(() => {
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     connection.client.register(
       DidChangeConfigurationNotification.type,
-      undefined
+      undefined,
     );
   }
   if (hasWorkspaceFolderCapability) {
     connection.workspace.onDidChangeWorkspaceFolders((/*event*/) => {
-      connection.console.log("Workspace folder change event received.");
+      connection.console.log('Workspace folder change event received.');
     });
   }
   send_state(new ServerState());
@@ -98,7 +114,7 @@ connection.onInitialized(() => {
 const defaultSettings: IExtensionSettings = {
   enabled: true,
   configFile: undefined,
-  packageManager: "npm",
+  packageManager: 'npm',
 };
 
 let globalSettings: IExtensionSettings = defaultSettings;
@@ -110,11 +126,13 @@ connection.onDidChangeConfiguration(({ settings }) => {
     // Reset all cached document settings
     documentSettings.clear();
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     globalSettings = (settings.linthtml ||
       defaultSettings) as IExtensionSettings;
   }
 
   // Revalidate all open text documents
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   documents.all().forEach(validateTextDocument);
 });
 
@@ -126,6 +144,7 @@ documents.onDidClose((/*e*/) => {
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent((change) => {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   validateTextDocument(change.document);
 });
 
@@ -137,32 +156,34 @@ function getDocumentSettings(resource: string): Thenable<IExtensionSettings> {
   if (!result) {
     result = connection.workspace.getConfiguration({
       scopeUri: resource,
-      section: "linthtml",
+      section: 'linthtml',
     });
     documentSettings.set(resource, result);
   }
   return result;
 }
 
-async function configForFile(
-  textDocument: TextDocument,
-  configFile?: string
-): Promise<any> | never {
-  if (configFile && configFile.trim() !== "") {
+async function configForFile(textDocument: TextDocument, configFile?: string) {
+  if (configFile && configFile.trim() !== '') {
     return readLocalConfig(configFile);
   }
   return localeConfig(textDocument, connection);
 }
-async function checkConfig(config: any, lintHTML: any) {
+
+async function checkConfig(
+  config: CosmiconfigResult,
+  lintHTML: LEGACY_LINTHTML,
+) {
   try {
-    await lintHTML("", config.config);
-  } catch (error: any) {
+    await lintHTML('', config?.config);
+    return null;
+  } catch (error) {
     return error;
   }
 }
 
 function generateSeverity(issue: ILintHtmlIssue) {
-  return issue.severity === "warning"
+  return issue.severity === Severity.WARNING
     ? DiagnosticSeverity.Warning
     : DiagnosticSeverity.Error;
 }
@@ -189,22 +210,26 @@ function generateDiagnosticPosition(issue: ILintHtmlIssue): Range {
 function printDiagnostics(
   issues: ILintHtmlIssue[],
   textDocument: TextDocument,
-  lintHTML: any
+  lintHTML: LintHTML_LIKE,
 ) {
   const diagnostics: Diagnostic[] = issues.map((issue: ILintHtmlIssue) => {
     return {
       severity: generateSeverity(issue),
       range: generateDiagnosticPosition(issue),
       code: issue.rule,
-      source: "linthtml",
+      source: 'linthtml',
       message: issue.msg || lintHTML.messages.renderIssue(issue),
     };
   });
   // Send the computed diagnostics to VSCode.
-  connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+  void connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
+async function lint(
+  textDocument: TextDocument,
+  linter: Linter,
+  lintHTML: LintHTML_LIKE,
+) {
   const text = textDocument.getText();
   try {
     const issues: ILintHtmlIssue[] = await linter.lint(text);
@@ -215,9 +240,9 @@ async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
     send_state(state);
 
     printDiagnostics(issues, textDocument, lintHTML);
-  } catch (error: any) {
+  } catch (error) {
     return connection.window.showErrorMessage(
-      `linthtml: ${error.message} In file ${URI.parse(textDocument.uri).fsPath}`
+      `linthtml: ${(error as Error).message} In file ${URI.parse(textDocument.uri).fsPath}`,
     );
   }
 }
@@ -225,20 +250,20 @@ async function lint(textDocument: TextDocument, linter: Linter, lintHTML: any) {
 async function createLinter(
   textDocument: TextDocument,
   { configFile }: IExtensionSettings,
-  lintHTML: any
+  lintHTML: LintHTML_LIKE,
 ): Promise<Linter | undefined> {
   // VSCODE extension already create a linter per file correctly
   // globby/node-ignorer don't accept absolute and relative paths with ../..
   if (lintHTML.create_linters_for_files) {
-    if (configFile && configFile.trim() !== "") {
-      return await lintHTML.from_config_path(configFile);
+    if (configFile && configFile.trim() !== '') {
+      return lintHTML.from_config_path(configFile);
     }
 
     // need to send file path relative to vscode folder and not workspace folder
     let path = URI.parse(textDocument.uri).fsPath;
     if (/^[a-z]:\\/i.test(path)) {
       // convert "\" in "/" in windows path
-      path = path.replace(/\\/g, "/");
+      path = path.replace(/\\/g, '/');
     }
 
     const [{ linter }] = await lintHTML.create_linters_for_files([path], null);
@@ -246,19 +271,24 @@ async function createLinter(
   }
 
   let config = await configForFile(textDocument, configFile);
+
   if (config !== null) {
-    const error: Error = await checkConfig(config, lintHTML);
+    const error = await checkConfig(
+      config,
+      lintHTML as unknown as LEGACY_LINTHTML,
+    );
     if (error) {
       throw new Error(
-        `${error.message}. Check your config file ${config.filepath}.`
+        `${(error as Error).message}. Check your config file ${config.filepath}.`,
       );
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     config = config.config;
   }
 
   if (!lintHTML.fromConfig) {
     connection.window.showErrorMessage(
-      "LintHTML extension does not support lintHTML's versions below the version 0.3.0"
+      "LintHTML extension does not support lintHTML's versions below the version 0.3.0",
     );
     return;
   }
@@ -268,7 +298,7 @@ async function createLinter(
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   const settings: IExtensionSettings = await getDocumentSettings(
-    textDocument.uri
+    textDocument.uri,
   );
   try {
     const lintHTML = await getLintHTML(textDocument, {
@@ -282,17 +312,20 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       return lint(textDocument, linter, lintHTML);
     }
     return;
-  } catch (error: any) {
-    return connection.window.showErrorMessage(`linthtml: ${error.message}`);
+  } catch (error) {
+    return connection.window.showErrorMessage(
+      `linthtml: ${(error as Error).message}`,
+    );
   }
 }
 
 connection.onDidChangeWatchedFiles((/*change*/) => {
   // changes globalConfig
   // need to load config once before ^^
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   documents.all().forEach((file) => validateTextDocument(file));
   // Monitored files have change in VSCode
-  connection.console.log("We received an file change event");
+  connection.console.log('We received an file change event');
 });
 
 // This handler provides the initial list of the completion items.
@@ -314,7 +347,7 @@ connection.onCompletion(
       //   data: 2
       // }
     ];
-  }
+  },
 );
 
 // This handler resolve additional information for the item selected in
@@ -350,8 +383,8 @@ connection.onDidChangeTextDocument((params) => {
   send_state(state);
   connection.console.log(
     `${params.textDocument.uri} changed: ${JSON.stringify(
-      params.contentChanges
-    )}`
+      params.contentChanges,
+    )}`,
   );
 });
 connection.onDidCloseTextDocument((params) => {
