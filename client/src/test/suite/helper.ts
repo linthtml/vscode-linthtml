@@ -37,7 +37,7 @@ export async function activate(docUri: vscode.Uri) {
     // TODO: Find a way to get server readiness (maybe extension client side can expose server status)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     await is_document_linted(ext, docUri.fsPath); // Wait for server activation
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    // await new Promise((resolve) => setTimeout(resolve, 4000));
   } catch (e) {
     /* tslint:disable no-console */
     console.error(e);
