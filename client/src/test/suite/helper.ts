@@ -14,8 +14,8 @@ function is_document_linted(
   return new Promise((resolve, _) => {
     const id = setInterval(() => {
       if (
-        extension.exports.document_checked === docUri &&
-        extension.exports.is_document_checked
+        extension.exports.status === 'VALIDATION_OK' &&
+        extension.exports.document_checked === docUri
       ) {
         // does not mean file has been checked
         clearInterval(id);

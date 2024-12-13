@@ -1,26 +1,53 @@
 'use strict';
 
 import * as path from 'path';
-import type { ExtensionContext } from 'vscode';
-import { window as Window, workspace } from 'vscode';
+import type { ExtensionContext, StatusBarItem } from 'vscode';
+import {
+  StatusBarAlignment,
+  ThemeColor,
+  window,
+  window as Window,
+  workspace,
+} from 'vscode';
 import type {
   LanguageClientOptions,
   ServerOptions,
-} from 'vscode-languageclient';
+} from 'vscode-languageclient/node';
 import {
   LanguageClient,
   ProgressType,
   RevealOutputChannelOn,
   SettingMonitor,
   TransportKind,
-} from 'vscode-languageclient';
+} from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
 export class ServerState {
-  document_checked: string | undefined;
-  is_document_checked = false;
+  status:
+    | 'IDLE'
+    | 'INIT'
+    | 'VALIDATION_STARTED'
+    | 'VALIDATION_OK'
+    | 'VALIDATION_KO';
+  document_checked?: string;
+  error_message?: string;
+
+  constructor(
+    status:
+      | 'IDLE'
+      | 'INIT'
+      | 'VALIDATION_STARTED'
+      | 'VALIDATION_OK'
+      | 'VALIDATION_KO' = 'IDLE',
+    document_checked?: string,
+  ) {
+    this.status = status;
+    this.document_checked = document_checked;
+  }
 }
+
+const documentsServerState = new Map<string, ServerState>();
 
 export function activate(context: ExtensionContext) {
   const serverModule = context.asAbsolutePath(
@@ -62,6 +89,32 @@ export function activate(context: ExtensionContext) {
     // 	}
     // }
   };
+  const state = new ServerState();
+
+  const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+
+  window.onDidChangeActiveTextEditor(
+    (textEditor) => {
+      if (state.status === 'IDLE' || state.status === 'INIT' || !textEditor) {
+        statusBarItem.hide();
+        return;
+      }
+
+      if (textEditor?.document.languageId !== 'html') {
+        statusBarItem.hide();
+        return;
+      }
+
+      const document_state = documentsServerState.get(
+        textEditor?.document.uri.toString(),
+      );
+      if (document_state) {
+        updateStatusBarItem(statusBarItem, document_state);
+      }
+    },
+    null,
+    context.subscriptions,
+  );
 
   try {
     client = new LanguageClient(
@@ -81,26 +134,50 @@ export function activate(context: ExtensionContext) {
     );
     return;
   }
-  const state = new ServerState();
-  client.registerProposedFeatures();
-  client
-    .onReady()
-    .then(() => {
-      client.onProgress(
-        new ProgressType<ServerState>(),
-        'server-state',
-        (value) => {
-          // Does not means file has been tested
 
-          state.document_checked = value.document_checked;
-          state.is_document_checked = value.is_document_checked;
-        },
-      );
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+  client.registerProposedFeatures();
+  client.onProgress(
+    new ProgressType<ServerState>(),
+    'server-state',
+    (new_state) => {
+      // Does not means file has been tested
+      state.status = new_state.status;
+      state.document_checked = new_state.document_checked;
+      state.error_message = new_state.error_message;
+
+      if (new_state.status === 'INIT') {
+        return;
+      }
+
+      documentsServerState.set(new_state.document_checked as string, new_state);
+
+      updateStatusBarItem(statusBarItem, new_state);
+    },
+  );
+
   return state;
+}
+
+function updateStatusBarItem(statusBarItem: StatusBarItem, state: ServerState) {
+  if (state.status === 'VALIDATION_STARTED') {
+    statusBarItem.text = `$(loading~spin) LintHTML`;
+    statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
+    statusBarItem.color = new ThemeColor('statusBar.foreground');
+    statusBarItem.show();
+  }
+  if (state.status === 'VALIDATION_KO') {
+    statusBarItem.text = `$(circle-slash) LintHTML`;
+    statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
+    statusBarItem.color = new ThemeColor('statusBar.foreground');
+    statusBarItem.tooltip = state.error_message;
+    statusBarItem.show();
+  }
+  if (state.status === 'VALIDATION_OK') {
+    statusBarItem.text = `$(check) LintHTML`;
+    statusBarItem.backgroundColor = new ThemeColor('statusBar.background');
+    statusBarItem.color = new ThemeColor('statusBar.foreground');
+    statusBarItem.show();
+  }
 }
 
 export function deactivate(): Thenable<void> | undefined {
