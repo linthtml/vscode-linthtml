@@ -12,7 +12,6 @@ import {
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind,
-  Files,
 } from 'vscode-languageserver/node';
 import {
   Severity,
@@ -48,8 +47,17 @@ let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
 class ServerState {
-  document_checked: string | undefined;
-  is_document_checked = false;
+  status: 'INIT' | 'VALIDATION_STARTED' | 'VALIDATION_OK' | 'VALIDATION_KO';
+  document_checked?: string;
+  error_message?: string;
+
+  constructor(
+    status: 'INIT' | 'VALIDATION_STARTED' | 'VALIDATION_OK' | 'VALIDATION_KO',
+    document_checked?: string,
+  ) {
+    this.status = status;
+    this.document_checked = document_checked;
+  }
 }
 
 function send_state(state: ServerState) {
@@ -105,7 +113,7 @@ connection.onInitialized(() => {
       connection.console.log('Workspace folder change event received.');
     });
   }
-  send_state(new ServerState());
+  send_state(new ServerState('INIT'));
 });
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
@@ -143,9 +151,9 @@ documents.onDidClose((/*e*/) => {
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
+documents.onDidChangeContent(({ document }) => {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  validateTextDocument(change.document);
+  validateTextDocument(document);
 });
 
 function getDocumentSettings(resource: string): Thenable<IExtensionSettings> {
@@ -198,12 +206,8 @@ function generateDiagnosticPosition(issue: ILintHtmlIssue): Range {
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    start: Position.create(issue.line - 1, issue.column),
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    end: Position.create(issue.line - 1, issue.column + 1),
+    start: Position.create((issue.line ?? 1) - 1, issue.column ?? 0),
+    end: Position.create((issue.line ?? 1) - 1, (issue.column ?? 0) + 1),
   };
 }
 
@@ -234,16 +238,18 @@ async function lint(
   try {
     const issues: ILintHtmlIssue[] = await linter.lint(text);
 
-    const state = new ServerState();
-    state.document_checked = Files.uriToFilePath(textDocument.uri);
-    state.is_document_checked = true;
-    send_state(state);
+    send_state({
+      status: 'VALIDATION_OK',
+      document_checked: textDocument.uri,
+    });
 
     printDiagnostics(issues, textDocument, lintHTML);
   } catch (error) {
-    return connection.window.showErrorMessage(
-      `linthtml: ${(error as Error).message} In file ${URI.parse(textDocument.uri).fsPath}`,
-    );
+    send_state({
+      status: 'VALIDATION_KO',
+      document_checked: textDocument.uri,
+      error_message: `${(error as Error).message} In file ${URI.parse(textDocument.uri).fsPath}`,
+    });
   }
 }
 
@@ -287,9 +293,12 @@ async function createLinter(
   }
 
   if (!lintHTML.fromConfig) {
-    connection.window.showErrorMessage(
-      "LintHTML extension does not support lintHTML's versions below the version 0.3.0",
-    );
+    send_state({
+      status: 'VALIDATION_KO',
+      document_checked: textDocument.uri,
+      error_message:
+        "LintHTML extension does not support lintHTML's versions below the version 0.3.0",
+    });
     return;
   }
 
@@ -297,6 +306,10 @@ async function createLinter(
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+  send_state({
+    status: 'VALIDATION_STARTED',
+    document_checked: textDocument.uri,
+  });
   const settings: IExtensionSettings = await getDocumentSettings(
     textDocument.uri,
   );
@@ -305,7 +318,6 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       connection,
       packageManager: settings.packageManager,
     });
-
     const linter = await createLinter(textDocument, settings, lintHTML);
 
     if (linter) {
@@ -313,9 +325,11 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     }
     return;
   } catch (error) {
-    return connection.window.showErrorMessage(
-      `linthtml: ${(error as Error).message}`,
-    );
+    send_state({
+      status: 'VALIDATION_KO',
+      document_checked: textDocument.uri,
+      error_message: (error as Error).message,
+    });
   }
 }
 
@@ -365,28 +379,31 @@ connection.onCompletion(
 //   }
 // );
 
-connection.onDidOpenTextDocument((params) => {
-  const state = new ServerState();
-  state.document_checked = Files.uriToFilePath(params.textDocument.uri);
-  send_state(state);
-  // A text document got opened in VSCode.
-  // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
-  // params.text the initial full content of the document.
-  connection.console.log(`${params.textDocument.uri} opened.`);
-});
-connection.onDidChangeTextDocument((params) => {
-  // The content of a text document did change in VSCode.
-  // params.uri uniquely identifies the document.
-  // params.contentChanges describe the content changes to the document.
-  const state = new ServerState();
-  state.document_checked = params.textDocument.uri;
-  send_state(state);
-  connection.console.log(
-    `${params.textDocument.uri} changed: ${JSON.stringify(
-      params.contentChanges,
-    )}`,
-  );
-});
+// connection.onDidOpenTextDocument((params) => {
+//   send_state({
+//     status: 'VALIDATION_STARTED',
+//     document_checked: URI.file(params.textDocument.uri).fsPath,
+//   });
+//   // A text document got opened in VSCode.
+//   // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
+//   // params.text the initial full content of the document.
+//   connection.console.log(`${params.textDocument.uri} opened.`);
+// });
+// connection.onDidChangeTextDocument((params) => {
+//   // The content of a text document did change in VSCode.
+//   // params.uri uniquely identifies the document.
+//   // params.contentChanges describe the content changes to the document.
+//   send_state({
+//     status: 'VALIDATION_STARTED',
+//     document_checked: URI.file(params.textDocument.uri).fsPath,
+//   });
+//   connection.console.log(
+//     `${params.textDocument.uri} changed: ${JSON.stringify(
+//       params.contentChanges,
+//     )}`,
+//   );
+// });
+
 connection.onDidCloseTextDocument((params) => {
   // A text document got closed in VSCode.
   // params.uri uniquely identifies the document.
