@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.7.0]
+
+- [FEAT] Add support for LintHTML v0.10.0
+- [FEAT] Use Status bar item to display information regarding LintHTML status
+
 ## [0.6.3]
 
 - [FIX] Correctly load LintHTML v0.9.x
