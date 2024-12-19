@@ -37,6 +37,7 @@ async function getLintHTML(
     packageManager: string;
   },
 ) {
+  connection.console.log('Searching for installed @linthtml/linthtml package');
   function trace(message: string) {
     connection.tracer.log(message);
   }
@@ -48,6 +49,7 @@ async function getLintHTML(
       trace,
     );
     const uri = URI.parse(textDocument.uri);
+    connection.console.log(`Current document uri ${textDocument.uri}`);
 
     if (uri.scheme === 'file') {
       const file = uri.fsPath;
@@ -62,6 +64,8 @@ async function getLintHTML(
 
       cwd = workspaceFolder;
     }
+    connection.console.log(`Current document cwd ${cwd}`);
+
     const lintHTMLPath = await Files.resolve(
       '@linthtml/linthtml',
       resolvedGlobalPackageManagerPath,
@@ -69,12 +73,21 @@ async function getLintHTML(
       trace,
     );
 
+    connection.console.log(
+      `Found installed @linthtml/linthtml package at ${lintHTMLPath}`,
+    );
+
+    const lintHTMLUriPath = URI.file(lintHTMLPath);
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const LintHTML = await dynamicImport(lintHTMLPath);
+    const LintHTML = await dynamicImport(lintHTMLUriPath.toString());
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return (LintHTML.default ?? LintHTML) as LintHTML_LIKE;
   } catch (_error) {
+    connection.console.log(
+      `Failed to find installed @linthtml/linthtml package ${_error as Error}`,
+    );
     throw new Error('Cannot find global or local @linthtml/linthtml package');
   }
 }
