@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [0.7.1]
+
+- [FIX] Correctly load linthtml@0.10.0+ package on windows
+
 ## [0.7.0]
 
 - [FEAT] Add support for LintHTML v0.10.0
